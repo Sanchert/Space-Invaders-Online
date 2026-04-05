@@ -1,0 +1,104 @@
+/* ========== MENU.CSS ========== */
+
+.menu-root {
+    -fx-alignment: center;
+    -fx-background-color: black;
+}
+
+.content-container {
+    -fx-alignment: center;
+    -fx-pref-width: 1440px;
+    -fx-pref-height: 900px;
+}
+
+/* === ЗАГОЛОВОК (общий для SPLASH и MAIN MENU) === */
+.game-title {
+    -fx-alignment: center;
+    -fx-translate-y: -100;
+    -fx-pref-height: 350px;
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 80px;
+    -fx-text-fill: rgb(243,243,243);
+    -fx-text-alignment: center;
+    -fx-letter-spacing: 8%;
+    -fx-line-spacing: 20;
+}
+
+/* === SPLASH STATE === */
+.splash-container {
+    -fx-alignment: center;
+    -fx-spacing: 0;
+    -fx-translate-y: 180;  /* Сдвинут вниз относительно заголовка */
+}
+
+/* Текст "PRESS ANY BUTTON" */
+.press-key-label {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 24px;
+    -fx-text-fill: #c0c1c3;
+    -fx-letter-spacing: 8%;
+    -fx-translate-y: 150px;
+}
+
+/* === MAIN MENU STATE === */
+.main-menu-button-container {
+    -fx-spacing: 20;
+    -fx-translate-y: 220;
+    -fx-padding: 0;
+}
+
+.menu-button {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 20px;
+    -fx-min-width: 280px;
+    -fx-padding: 5px 30px;
+    -fx-background-color: rgba(0,0,0,0);
+    -fx-text-fill: rgba(255,255,255,0.75);
+    -fx-cursor: hand;
+}
+
+.menu-button:hover {
+    -fx-effect: dropshadow(gaussian, #BCFFFD, 10, 0.25, 0, 0);
+    -fx-text-fill: rgba(255,255,255, 0.9);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.menu-button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* === NAME INPUT STATE === */
+.name-input-container {
+    -fx-alignment: center;
+    -fx-spacing: 80;
+}
+
+.input-title {
+    -fx-font-size: 32px;
+    -fx-text-fill: #c0c1c3;
+    -fx-letter-spacing: 2px;
+}
+
+.name-input-field {
+    -fx-prompt-text: "Player name";
+    -fx-max-width: 450px;
+    -fx-min-height: 52px;
+    -fx-font-size: 32px;
+    -fx-background-color: #c0c1c3;
+    -fx-background-radius: 4px;
+    -fx-prompt-text-fill: #e5e5e5;
+    -fx-text-fill: white;
+}
+
+.name-input-field:focused {
+    -fx-effect: dropshadow(gaussian, #bcfffd, 25, 0.25, 0, 0);
+}
+
+.error-label {
+    -fx-font-family: "Press Start 2P";
+    -fx-font-size: 12px;
+    -fx-text-fill: #ff6b6b;
+    -fx-padding: 10px 0 0 0;
+}

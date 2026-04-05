@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootPane" styleClass="menu-root" stylesheets="@../css/common.css,@../css/menu.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.space_invaders_online.game.sceneController.controllers.MenuScreenController">
+
+    <!-- Фон -->
+    <ImageView fitHeight="900" fitWidth="1440">
+        <Image url="@../images/backgrounds/bg-space.png" />
+    </ImageView>
+
+    <!-- Центральный контейнер -->
+    <StackPane fx:id="contentContainer" styleClass="content-container">
+   
+           <!-- === ЗАГОЛОВОК (всегда виден в SPLASH и MAIN MENU) === -->
+        <Label fx:id="gameTitle" styleClass="game-title" text="Space&#10;Invaders&#10;Online"/>
+
+        <!-- === MAIN MENU STATE (кнопки) === -->
+        <VBox fx:id="mainMenuContent" alignment="CENTER" managed="false" spacing="15" styleClass="main-menu-button-container" translateY="180" visible="false">
+
+            <Button fx:id="singlePlayerBtn" styleClass="menu-button" text="Single player" />
+            <Button fx:id="onlineGameBtn"   styleClass="menu-button" text="Online game" />
+            <Button fx:id="optionsBtn"      styleClass="menu-button" text="Options" />
+            <Button fx:id="exitBtn"         styleClass="menu-button" text="Exit" />
+
+        </VBox>
+
+        <!-- === NAME INPUT STATE === -->
+        <VBox fx:id="nameInputContent" alignment="CENTER" managed="false" spacing="20" styleClass="name-input-container" visible="false">
+
+            <Label styleClass="input-title" text="Enter your name" />
+
+            <TextField fx:id="nameField" styleClass="name-input-field" />
+
+            <VBox alignment="CENTER" spacing="20">
+                <Button fx:id="confirmNameBtn" styleClass="menu-button" text="Confirm" />
+                <Button fx:id="backToMenuBtn"  styleClass="menu-button"    text="Back"    />
+            </VBox>
+
+            <Label fx:id="errorLabel" managed="false" styleClass="error-label" visible="false" />
+
+        </VBox>
+
+        <!-- === SPLASH STATE (только текст "press any button") === -->
+        <VBox fx:id="splashContent" alignment="CENTER" managed="true" styleClass="splash-container" visible="true">
+
+            <!-- Текст "PRESS ANY BUTTON" -->
+            <Label fx:id="pressAnyKeyLabel" styleClass="press-key-label" text="press any button to start" />
+
+        </VBox>
+
+    </StackPane>
+
+</StackPane>

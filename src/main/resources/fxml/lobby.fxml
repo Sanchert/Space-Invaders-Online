@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<AnchorPane fx:id="rootPane"
+            stylesheets="@../css/common.css,@../css/lobby.css"
+            styleClass="lobby-root"
+            xmlns="http://javafx.com/javafx/8"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.example.space_invaders_online.game.sceneController.controllers.LobbyScreenController">
+
+    <ImageView>
+        <Image url="@../images/backgrounds/bg-space.png"/>
+    </ImageView>
+
+    <VBox styleClass="lobby-content-container">
+
+        <Label text="Waiting for players..." styleClass="lobby-title"/>
+
+        <VBox fx:id="playersList" styleClass="players-list">
+            <!-- Каждый игрок — HBox с цветом, именем и флажком -->
+        </VBox>
+
+        <VBox>
+            <Button fx:id="readyBtn" text="ready"        styleClass="action-button"/>
+            <Button fx:id="backBtn"  text="back to menu" styleClass="action-button"/>
+        </VBox>
+    </VBox>
+
+</AnchorPane>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.effect.DropShadow?>
+
+<VBox fx:id="rootPane"
+      alignment="CENTER"
+      spacing="30"
+      stylesheets="@../css/common.css,@../css/victory.css"
+      styleClass="victory-root"
+      xmlns="http://javafx.com/javafx/8"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.example.space_invaders_online.game.sceneController.controllers.VictoryScreenController">
+
+    <!-- Победный текст -->
+    <Label fx:id="winnerLabel"
+           text="Player WIN!"
+           styleClass="victory-title">
+        <effect>
+            <DropShadow color="gold" radius="15" spread="0.7"/>
+        </effect>
+    </Label>
+
+    <!-- Декоративная линия -->
+    <Region styleClass="victory-divider"/>
+
+    <!-- Кнопки действий -->
+    <VBox spacing="20" alignment="CENTER">
+        <Button fx:id="retryButton"
+                text="PRESS R TO RETRY"
+                styleClass="victory-button,retry-button"/>
+
+        <Button fx:id="exitButton"
+                text="EXIT"
+                styleClass="victory-button,exit-button"/>
+    </VBox>
+
+    <!-- Дополнительная информация -->
+    <Label fx:id="infoLabel"
+           text="Press ESC to exit"
+           styleClass="info-text"/>
+
+</VBox>
