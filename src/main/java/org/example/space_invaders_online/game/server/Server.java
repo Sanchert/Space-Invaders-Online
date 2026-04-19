@@ -13,6 +13,7 @@ import java.net.Socket;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 /*
  * [CLIENT] Хранит все объекты, отсылает запросы на изменение, получает ответы с результатами изменения, отрисовывает.
  * Клиент при создании запрашивает соединение. Сервер выдаёт id и текущее свое состояние. Клиент обновляет состояние.
@@ -77,228 +78,498 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Server {
     private static final int PORT = 12345;
     private static final int MAX_PLAYERS = 4;
-    private static final InetAddress IP = null;
-    private ServerSocket serverSocket;
 
+    private ServerSocket serverSocket;
     private final Map<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
-    private final Map<Integer, Boolean> clientPauseStates = new ConcurrentHashMap<>();
-    private final Map<Integer, String> playerNames = new ConcurrentHashMap<>();
-    private final GameWorld gameWorld = new GameWorld();
+    private final Map<Integer, ServerPlayer> gamePlayers = new ConcurrentHashMap<>();
+    private final Map<Integer, Boolean> readyStatus = new ConcurrentHashMap<>();
+    private final Map<Integer, Boolean> pauseRequest = new ConcurrentHashMap<>();
+
+    private final AtomicInteger nextPlayerId = new AtomicInteger(1);
+    private final Set<String> usedNames = ConcurrentHashMap.newKeySet();
+
+    private ServerState state = ServerState.WAITING;
+    private GameWorld gameWorld;
+    private Thread gameThread;
+    private volatile boolean gameRunning = false;
 
     private final Gson gson = new Gson();
 
-    private volatile ServerState serverState = ServerState.WAITING;
-
-    private static final double STATE_BROADCAST_RATE = 20.0; // 20 обновлений в секунду
-    private double broadcastAccumulator = 0;
-
     public void start() {
         try {
-            serverSocket = new ServerSocket(PORT, MAX_PLAYERS, IP); System.out.println("[SERVER] server started on " + serverSocket.getInetAddress() + ":" + PORT);
+            serverSocket = new ServerSocket(PORT);
+            System.out.println("[SERVER] Started on port " + PORT);
 
-            gameWorld.init();
+            // Thread для принятия подключений
+            new Thread(this::acceptClients).start();
 
-            Thread acceptor = new Thread(() -> {
-                while (clients.size() < MAX_PLAYERS) {
-                    try {
-                        //System.out.println("[SERVER] waiting for new client...");
-                        Socket clientSocket = serverSocket.accept();
-                        int clientId = gameWorld.addPlayer();
-
-                        ClientHandler handler = new ClientHandler(clientSocket, clientId, this);
-                        clients.put(clientId, handler);
-                        clientPauseStates.put(clientId, true);
-                        // System.out.println("[SERVER] подключился клиент [" + clientId + "]: " + clientSocket.getPort());
-                        new Thread(handler).start();
-
-                        sendInitialState(handler, clientId);
-                        updateServerState();
-                    } catch (IOException e) {
-                        System.out.println("[SERVER ERR] " + e.getMessage());
-                    }
-                }
-                System.out.println("[SERVER] Acceptor closed.");
-            });
-            acceptor.start();
-            gameLoop();
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            System.err.println("[SERVER] Failed to start: " + e.getMessage());
         }
+    }
+
+    private void acceptClients() {
+        while (true) {
+            try {
+                if (clients.size() >= MAX_PLAYERS && state != ServerState.RUNNING) {
+                    Thread.sleep(1000);
+                    continue;
+                }
+
+                Socket socket = serverSocket.accept();
+                int playerId = nextPlayerId.getAndIncrement();
+
+                ClientHandler handler = new ClientHandler(socket, playerId, this);
+                clients.put(playerId, handler);
+                readyStatus.put(playerId, false);
+                pauseRequest.put(playerId, false);
+
+                new Thread(handler).start();
+
+                System.out.println("[SERVER] Player " + playerId + " connected");
+
+                // Отправляем INIT сообщение
+                sendInitMessage(playerId);
+
+            } catch (Exception e) {
+                if (!serverSocket.isClosed()) {
+                    System.err.println("[SERVER] Error accepting connection: " + e.getMessage());
+                }
+                break;
+            }
+        }
+    }
+
+    private void sendInitMessage(int playerId) {
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.INIT;
+        message.playerId = playerId;
+
+        try {
+            ClientHandler handler = clients.get(playerId);
+            if (handler != null) {
+                handler.sendMessage(gson.toJson(message));
+            }
+        } catch (IOException e) {
+            System.err.println("[SERVER] Failed to send INIT: " + e.getMessage());
+        }
+    }
+
+    public void handleClientRequest(int playerId, Request request) {
+        switch (request.requestType()) {
+            case SET_NAME:
+                handleSetName(playerId, request.args());
+                break;
+
+            case START:
+                handleReady(playerId, true);
+                break;
+
+            case PAUSE:
+                handlePauseRequest(playerId, true);
+                break;
+
+            case RESUME:
+                handlePauseRequest(playerId, false);
+                break;
+
+            case SHOOT:
+                if (state == ServerState.RUNNING && gameWorld != null) {
+                    gameWorld.handleRequest(playerId, request);
+                    DatabaseManager.getInstance().recordShot(
+                            gamePlayers.get(playerId).getName(), false); // hit будет обновлён позже
+                }
+                break;
+
+            case MOVE_UP:
+            case MOVE_DOWN:
+                if (state == ServerState.RUNNING && gameWorld != null) {
+                    gameWorld.handleRequest(playerId, request);
+                }
+                break;
+
+            case GET_LEADERBOARD:
+                sendLeaderboard(playerId);
+                break;
+
+            case DISCONNECT:
+                removeClient(playerId);
+                break;
+        }
+    }
+
+    private void handleSetName(int playerId, String name) {
+        if (name == null || name.trim().isEmpty()) {
+            sendNameResponse(playerId, false);
+            return;
+        }
+
+        name = name.trim();
+
+        if (usedNames.contains(name)) {
+            sendNameResponse(playerId, false);
+            return;
+        }
+
+        usedNames.add(name);
+
+        ServerPlayer player = new ServerPlayer(playerId, 21f, 60f + (clients.size() - 1) * 60f, 10, playerId % 4);
+        player.setName(name);
+        gamePlayers.put(playerId, player);
+
+        sendNameResponse(playerId, true);
+        broadcastPlayerList();
+    }
+
+    private void sendNameResponse(int playerId, boolean accepted) {
+        ServerMessage message = new ServerMessage();
+        message.type = accepted ? ServerAnswerType.NAME_ACCEPTED : ServerAnswerType.NAME_REJECTED;
+
+        try {
+            ClientHandler handler = clients.get(playerId);
+            if (handler != null) {
+                handler.sendMessage(gson.toJson(message));
+            }
+        } catch (IOException e) {
+            System.err.println("[SERVER] Failed to send name response: " + e.getMessage());
+        }
+    }
+
+    private void handleReady(int playerId, boolean ready) {
+        readyStatus.put(playerId, ready);
+        broadcastPlayerList();
+
+        // Проверяем, все ли готовы
+        if (state == ServerState.WAITING && allPlayersReady()) {
+            startGame();
+        }
+    }
+
+    private void handlePauseRequest(int playerId, boolean requestingPause) {
+        pauseRequest.put(playerId, requestingPause);
+
+        if (requestingPause) {
+            // Проверяем, все ли запросили паузу
+            if (allPlayersPaused()) {
+                pauseGame();
+            }
+        } else {
+            // Кто-то снял запрос паузы - возобновляем
+            if (state == ServerState.PAUSED) {
+                resumeGame();
+            }
+        }
+    }
+
+    private boolean allPlayersReady() {
+        if (clients.size() < 2) return false; // Минимум 2 игрока для начала
+        return readyStatus.values().stream().allMatch(ready -> ready);
+    }
+
+    private boolean allPlayersPaused() {
+        return pauseRequest.values().stream().allMatch(paused -> paused);
+    }
+
+    private void startGame() {
+        state = ServerState.RUNNING;
+        gameWorld = new GameWorld(this);
+        gameWorld.init();
+
+        // Добавляем игроков в мир
+        for (ServerPlayer player : gamePlayers.values()) {
+            gameWorld.addExistingPlayer(player);
+        }
+
+        gameRunning = true;
+        gameThread = new Thread(this::gameLoop);
+        gameThread.start();
+
+        broadcastGameStart();
     }
 
     private void gameLoop() {
         long lastTime = System.nanoTime();
+        final double TICK_RATE = 60.0;
+        final double TIME_PER_TICK = 1_000_000_000.0 / TICK_RATE;
+        double delta = 0;
 
+        while (gameRunning) {
+            long now = System.nanoTime();
+            delta += (now - lastTime) / TIME_PER_TICK;
+            lastTime = now;
 
-        while (serverState != ServerState.EXIT) {
-            long currentTime = System.nanoTime();
-            int ticksToProcess = ServerTime.calculateTicksToProcess(currentTime);
-
-            if (serverState == ServerState.RUNNING) {
-
-                for (int i = 0; i < ticksToProcess; i++) {
-                    processGameTick();
-                }
-
-                // Отправляем обновления состояния с пониженной частотой
-                broadcastAccumulator += ticksToProcess * ServerTime.FIXED_DELTA_TIME;
-                if (broadcastAccumulator >= 1.0 / STATE_BROADCAST_RATE) {
-                    broadcastAccumulator = 0;
+            while (delta >= 1 && gameRunning) {
+                if (state == ServerState.RUNNING) {
+                    gameWorld.update();
+                    checkWinCondition();
                     broadcastGameState();
                 }
-//                gameWorld.update();
-//                if (gameWorld.hasWinner() != null) {
-//                    broadcastEndState(gameWorld.hasWinner());
-//                    serverState = ServerState.WAITING;
-//                    continue;
-//                }
-//                broadcastGameState();
+                delta--;
+            }
+
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
             }
         }
     }
 
-    private void processGameTick() {
-        // Обновляем мир с фиксированным deltaTime
-        gameWorld.update();
-
-        // Обрабатываем накопленные запросы
-        processPendingRequests();
+    private void pauseGame() {
+        state = ServerState.PAUSED;
+        // Приостанавливаем поток игры
+        if (gameThread != null) {
+            gameThread.suspend(); // Важно: используем suspend для соответствия требованию
+        }
+        broadcastGamePaused();
     }
 
-    // TODO:
-    private void processPendingRequests() {
-        // Здесь можно обрабатывать очередь запросов от клиентов
-        // Например, применять их в фиксированные моменты времени
+    private void resumeGame() {
+        if (gameThread != null) {
+            gameThread.resume(); // Возобновляем поток
+        }
+        state = ServerState.RUNNING;
+        broadcastGameResumed();
     }
 
-    private void sendInitialState(ClientHandler handler, int playerId) throws IOException {
-//        handler.sendMessage(gson.toJson(new ServerMessage(playerId, ServerAnswerType.INIT, gameWorld.serialize())));
+    private void checkWinCondition() {
+        if (gameWorld == null) return;
+
+        String winner = gameWorld.hasWinner();
+        if (winner != null) {
+            endGame(winner);
+        }
     }
 
+    private void endGame(String winnerName) {
+        gameRunning = false;
+        state = ServerState.GAME_OVER;
 
-    private void broadcastEndState(String winner) {
-        clients.values().forEach(clientHandler -> {
-//            try {
-//                clientHandler.sendMessage(gson.toJson(new ServerMessage(clientHandler.getPlayerId(), ServerAnswerType.WIN, gameWorld.serialize(), winner)));
-//            } catch (IOException e) {
-//                System.out.println(e.getMessage());
-//            }
-        });
+        // Записываем победу в БД
+        DatabaseManager.getInstance().recordWin(winnerName);
+
+        // Сообщаем всем о победителе
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.WIN;
+        message.args = winnerName;
+
+        String jsonMessage = gson.toJson(message);
+        for (ClientHandler client : clients.values()) {
+            try {
+                client.sendMessage(jsonMessage);
+            } catch (IOException e) {
+                System.err.println("[SERVER] Failed to send win message: " + e.getMessage());
+            }
+        }
+
+        // Сбрасываем состояние для следующей игры
+        resetForNextGame();
     }
+
+    private void resetForNextGame() {
+        state = ServerState.WAITING;
+
+        // Сбрасываем статусы готовности
+        for (Integer playerId : readyStatus.keySet()) {
+            readyStatus.put(playerId, false);
+            pauseRequest.put(playerId, false);
+        }
+
+        // Сбрасываем счёт игроков
+        for (ServerPlayer player : gamePlayers.values()) {
+            player.resetScore();
+            player.resetShoots();
+        }
+
+        broadcastPlayerList();
+    }
+
     private void broadcastGameState() {
-        clients.values().forEach(clientHandler -> {
-//            try {
-//                clientHandler.sendMessage(gson.toJson(new ServerMessage(clientHandler.getPlayerId(), ServerAnswerType.STATE_UPDATE, gameWorld.serialize())));
-//            } catch (IOException e) {
-//                System.out.println(e.getMessage());
-//            }
-        });
-    }
+        if (gameWorld == null) return;
 
-    public void handleClientRequest(int playerId, Request request) {
-        RequestType type = request.requestType();
-
-        if (type == RequestType.PAUSE) {
-            clientPauseStates.put(playerId, true);
-            updateServerState();
-            System.out.println("[SERVER] Player " + playerId + " paused the game");
-            return;
-        }
-
-        if (type == RequestType.START) {
-            clientPauseStates.put(playerId, false);
-            updateServerState();
-            System.out.println("[SERVER] Player " + playerId + " resumed the game");
-            return;
-        }
-
-        if (type == RequestType.SET_NAME) {
-
-            String newName = request.args();
-            boolean accepted = true;
-            System.out.println("Get name:" + newName);
-
-            if (newName == null || newName.trim().isEmpty()) {
-                System.out.println("[SERVER] Player " + playerId + " tried to set empty name");
-                accepted = false;
+        // Конвертируем в сериализуемые объекты
+        List<SerializablePlayer> serializablePlayers = new ArrayList<>();
+        for (ServerPlayer player : gameWorld.getPlayers().values()) {
+            if (!player.isDestroyed()) {
+                serializablePlayers.add(player.toSerializable());
             }
+        }
 
-            if (playerNames.containsValue(newName)) {
-                System.out.println("[SERVER] Player " + playerId + " tried to use existing name: " + newName);
-                accepted = false;
+        List<SerializableBullet> serializableBullets = new ArrayList<>();
+        for (ServerBullet bullet : gameWorld.getBullets().values()) {
+            if (!bullet.isDestroyed()) {
+                serializableBullets.add(bullet.toSerializable());
             }
+        }
 
-            gameWorld.handleRequest(playerId, request);
-            playerNames.put(playerId, newName);
-            System.out.println("[SERVER] Player " + playerId + " set name to: " + newName);
-
-            sendNameResponse(playerId, accepted);
-            if (accepted) {
-                broadcastGameState();
+        List<SerializableTarget> serializableTargets = new ArrayList<>();
+        for (ServerTarget target : gameWorld.getTargets().values()) {
+            if (!target.isDestroyed()) {
+                serializableTargets.add(target.toSerializable());
             }
-            return;
         }
 
-        if (type == RequestType.DISCONNECT) {
-            gameWorld.handleRequest(playerId, request);
-            if (clients.isEmpty()) {
-                stop();
+        SerializableGameState state = new SerializableGameState(
+                serializablePlayers,
+                serializableBullets,
+                serializableTargets
+        );
+
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.STATE_UPDATE;
+        message.currentGameState = state;
+
+        String jsonMessage = gson.toJson(message);
+
+        for (ClientHandler client : clients.values()) {
+            try {
+                client.sendMessage(jsonMessage);
+            } catch (IOException e) {
+                System.err.println("[SERVER] Failed to send state: " + e.getMessage());
             }
-            return;
+        }
+    }
+
+    private void broadcastPlayerList() {
+        // Отправляем обновлённый список игроков
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.PLAYER_LIST_UPDATE;
+        message.players = new ArrayList<>(gamePlayers.values());
+
+        String jsonMessage = gson.toJson(message);
+
+        for (ClientHandler client : clients.values()) {
+            try {
+                client.sendMessage(jsonMessage);
+            } catch (IOException e) {
+                System.err.println("[SERVER] Failed to send player list: " + e.getMessage());
+            }
+        }
+    }
+
+    private void broadcastGameStart() {
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.GAME_START;
+
+        String jsonMessage = gson.toJson(message);
+
+        for (ClientHandler client : clients.values()) {
+            try {
+                client.sendMessage(jsonMessage);
+            } catch (IOException e) {
+                System.err.println("[SERVER] Failed to send game start: " + e.getMessage());
+            }
+        }
+    }
+
+    private void broadcastGamePaused() {
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.GAME_PAUSED;
+
+        String jsonMessage = gson.toJson(message);
+
+        for (ClientHandler client : clients.values()) {
+            try {
+                client.sendMessage(jsonMessage);
+            } catch (IOException e) {
+                System.err.println("[SERVER] Failed to send pause: " + e.getMessage());
+            }
+        }
+    }
+
+    private void broadcastGameResumed() {
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.GAME_RESUMED;
+
+        String jsonMessage = gson.toJson(message);
+
+        for (ClientHandler client : clients.values()) {
+            try {
+                client.sendMessage(jsonMessage);
+            } catch (IOException e) {
+                System.err.println("[SERVER] Failed to send resume: " + e.getMessage());
+            }
+        }
+    }
+
+    private SerializableGameState serializeGameState() {
+        List<SerializablePlayer> serializedPlayers = new ArrayList<>();
+        for (ServerPlayer player : gamePlayers.values()) {
+            if (!player.isDestroyed()) {
+                serializedPlayers.add(player.serialize());
+            }
         }
 
-        if (serverState == ServerState.RUNNING) {
-            gameWorld.handleRequest(playerId, request);
-        } else {
-            System.out.println("[SERVER] Ignoring " + type + " from player " + playerId + " - game is paused");
-        }
-    }
-    private void sendNameResponse(int playerId, boolean accepted) {
-        ClientHandler handler = clients.get(playerId);
-        if (handler != null) {
-//            try {
-                ServerAnswerType type = accepted ? ServerAnswerType.NAME_ACCEPTED : ServerAnswerType.NAME_REJECTED;
-//                ServerMessage response = new ServerMessage(playerId, type, null);
-//                handler.sendMessage(gson.toJson(response));
-//            } catch (IOException e) {
-//                System.out.println("[SERVER] Failed to send name response to player " + playerId);
-//            }
-        }
-    }
-    private void updateServerState() {
-        if (clients.isEmpty()) {
-            serverState = ServerState.WAITING;
-            return;
+        List<SerializableBullet> serializedBullets = new ArrayList<>();
+        for (ServerBullet bullet : gameWorld.getBullets().values()) {
+            if (!bullet.isDestroyed()) {
+                serializedBullets.add(bullet.serialize());
+            }
         }
 
-        boolean anyPaused = clientPauseStates.values().stream().anyMatch(paused -> paused);
-
-        if (anyPaused) {
-            serverState = ServerState.WAITING;
-            System.out.println("[SERVER] waiting");
-        } else {
-            serverState = ServerState.RUNNING;
-            System.out.println("[SERVER] running");
+        List<SerializableTarget> serializedTargets = new ArrayList<>();
+        for (ServerTarget target : gameWorld.getTargets().values()) {
+            if (!target.isDestroyed()) {
+                serializedTargets.add(target.serialize());
+            }
         }
+
+        return new SerializableGameState(serializedPlayers, serializedBullets, serializedTargets);
     }
-    public void removeClient(int playerId) {
-        clients.remove(playerId);
-        clientPauseStates.remove(playerId);
-        playerNames.remove(playerId);
-//        gameWorld.removePlayer(playerId);
-        updateServerState();
-        broadcastGameState();
-    }
-    public void stop() {
-        serverState = ServerState.EXIT;
+
+    private void sendLeaderboard(int playerId) {
+        List<PlayerStats> leaderboard = DatabaseManager.getInstance().getLeaderboard();
+
+        ServerMessage message = new ServerMessage();
+        message.type = ServerAnswerType.LEADERBOARD;
+        message.leaderboard = leaderboard;
+
         try {
-            serverSocket.close();
+            ClientHandler handler = clients.get(playerId);
+            if (handler != null) {
+                handler.sendMessage(gson.toJson(message));
+            }
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            System.err.println("[SERVER] Failed to send leaderboard: " + e.getMessage());
         }
     }
-    static void main() {
-        new Server().start();
+
+    public void removeClient(int playerId) {
+        ClientHandler handler = clients.remove(playerId);
+        if (handler != null) {
+            ServerPlayer player = gamePlayers.remove(playerId);
+            if (player != null && player.getName() != null) {
+                usedNames.remove(player.getName());
+            }
+        }
+        readyStatus.remove(playerId);
+        pauseRequest.remove(playerId);
+
+        broadcastPlayerList();
+        System.out.println("[SERVER] Player " + playerId + " disconnected");
+    }
+
+    public void stop() {
+        gameRunning = false;
+        try {
+            if (serverSocket != null && !serverSocket.isClosed()) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            System.err.println("[SERVER] Error stopping: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        Server server = new Server();
+        server.start();
+
+        // Добавляем shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            DatabaseManager.getInstance().shutdown();
+            server.stop();
+        }));
     }
 }
 

@@ -1,22 +1,16 @@
 package org.example.space_invaders_online.game.server;
 
-//import org.example.space_invaders_online.SerializableGameState;
+import org.example.space_invaders_online.game.database.PlayerStats;
+import java.util.List;
 
 public class ServerMessage {
+    private static final long serialVersionUID = 1L;
+
     public ServerAnswerType type;
-    public int playerId;                            // ID этого клиента (только для INIT)
-//    public SerializableGameState currentGameState;  // Полное состояние мира
+    public int playerId;
+    public SerializableGameState currentGameState;
     public String args;
-//    public ServerMessage(int playerId, ServerAnswerType type, SerializableGameState state) {
-//        this.playerId = playerId;
-//        this.currentGameState = state;
-//        this.type = type;
-//    }
-//
-//    public ServerMessage(int playerId, ServerAnswerType type, SerializableGameState state, String args) {
-//        this.playerId = playerId;
-//        this.currentGameState = state;
-//        this.type = type;
-//        this.args = args;
-//    }
+    public List<SerializablePlayer> players;
+    public List<PlayerStats> leaderboard;
 }
+

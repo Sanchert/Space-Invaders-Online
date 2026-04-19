@@ -1,15 +1,14 @@
 package org.example.space_invaders_online.game.server;
 
-import com.google.gson.Gson;
 import javafx.scene.shape.Shape;
-import org.example.space_invaders_online.game.gameWorld.GameObject;
+import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 import org.example.space_invaders_online.game.client.MoveDirection;
 
 
-public class ServerPlayer extends GameObject {
+public class ServerPlayer extends ServerGameObject {
     private double speed;
     private int shoots;
-    private double shootLag = 0; // NOTE: in seconds
+    private double shootLag = 0;
     private final int colorId;
     private String name;
     private int score;
@@ -31,7 +30,7 @@ public class ServerPlayer extends GameObject {
             shootLag -= ServerTime.FIXED_DELTA_TIME;
         }
     }
-    //    TODO: let's do this!
+
     @Override
     public boolean collidesWith(Shape other) {
         return false;
@@ -63,7 +62,7 @@ public class ServerPlayer extends GameObject {
     public void shoot() {
         if (canShoot()) {
             shoots--;
-            shootLag = 1; // NOTE: seconds
+            shootLag = 1;
         }
     }
 
@@ -79,8 +78,22 @@ public class ServerPlayer extends GameObject {
         score += additionalPoints;
     }
 
-//    @Override
-//    public String serialize(Gson json) {
-//        return json.toJson(this);
-//    }
+    public int getShootsLeft() {
+        return shoots;
+    }
+
+    public void resetScore() {
+        this.score = 0;
+    }
+
+    public void resetShoots() {
+        this.shoots = 10;
+    }
+
+    public SerializablePlayer serialize() {
+        return new SerializablePlayer(
+                objectId, name, (float)pos_x, (float)pos_y,
+                shoots, score, colorId, !destroyed
+        );
+    }
 }

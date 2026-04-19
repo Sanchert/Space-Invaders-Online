@@ -58,4 +58,49 @@
 
     </StackPane>
 
+
+    <ImageView>
+        <Image url="@../images/backgrounds/bg-space.png"/>
+    </ImageView>
+
+    <VBox styleClass="lobby-content-container">
+
+        <Label text="Waiting for players..." styleClass="lobby-title"/>
+
+        <VBox fx:id="playersList" styleClass="players-list">
+            <!-- Каждый игрок — HBox с цветом, именем и флажком -->
+        </VBox>
+
+        <VBox>
+            <Button fx:id="readyBtn" text="ready"        styleClass="action-button"/>
+            <Button fx:id="backBtn"  text="back to menu" styleClass="action-button"/>
+        </VBox>
+    </VBox>
+    <!-- Победный текст -->
+    <Label fx:id="winnerLabel"
+           text="Player WIN!"
+           styleClass="victory-title">
+        <effect>
+            <DropShadow color="gold" radius="15" spread="0.7"/>
+        </effect>
+    </Label>
+
+    <!-- Декоративная линия -->
+    <Region styleClass="victory-divider"/>
+
+    <!-- Кнопки действий -->
+    <VBox spacing="20" alignment="CENTER">
+        <Button fx:id="retryButton"
+                text="PRESS R TO RETRY"
+                styleClass="victory-button,retry-button"/>
+
+        <Button fx:id="exitButton"
+                text="EXIT"
+                styleClass="victory-button,exit-button"/>
+    </VBox>
+
+    <!-- Дополнительная информация -->
+    <Label fx:id="infoLabel"
+           text="Press ESC to exit"
+           styleClass="info-text"/>
 </StackPane>

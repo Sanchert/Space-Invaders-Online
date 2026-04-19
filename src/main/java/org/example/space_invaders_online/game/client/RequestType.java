@@ -4,9 +4,10 @@ public enum RequestType {
     MOVE_UP,
     MOVE_DOWN,
     SHOOT,
-    CONNECT,
     SET_NAME,
     DISCONNECT,
     START,
-    PAUSE
+    PAUSE,
+    RESUME,
+    GET_LEADERBOARD
 }

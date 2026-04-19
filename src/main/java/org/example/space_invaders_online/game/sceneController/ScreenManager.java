@@ -63,10 +63,7 @@ public class ScreenManager {
     private String getFxmlPath(ScreenType type) {
         return switch (type) {
             case MAIN_MENU -> "/fxml/menu.fxml";
-            case LOBBY -> "/fxml/lobby.fxml";
             case GAME -> "/fxml/game.fxml";
-            case VICTORY -> "/fxml/victory.fxml";
-            default -> "/fxml/menu.fxml";
         };
     }
 

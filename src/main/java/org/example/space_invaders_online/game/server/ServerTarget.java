@@ -1,11 +1,10 @@
 package org.example.space_invaders_online.game.server;
 
-import com.google.gson.Gson;
 import javafx.scene.shape.Shape;
-import org.example.space_invaders_online.game.gameWorld.GameObject;
+import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 import org.example.space_invaders_online.game.client.MoveDirection;
 
-public class ServerTarget extends GameObject {
+public class ServerTarget extends ServerGameObject {
     private int cost = 1;
     private double speed = 1.0f;
     private final static double UPPER_BOUND = 330.0;
@@ -34,9 +33,10 @@ public class ServerTarget extends GameObject {
     }
 //    TODO: let's do this!
 //    @Override
-//    public String serialize(Gson json) {
-//        return "";
-//    }
+// Добавить метод serialize в ServerTarget.java
+public SerializableTarget serialize() {
+    return new SerializableTarget(objectId, (float)pos_x, (float)pos_y, cost, !destroyed);
+}
 
 //    TODO: let's do this!
     @Override

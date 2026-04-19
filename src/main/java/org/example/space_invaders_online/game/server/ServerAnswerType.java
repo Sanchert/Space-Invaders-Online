@@ -1,9 +1,14 @@
 package org.example.space_invaders_online.game.server;
 // Типы сообщений
 public enum ServerAnswerType {
-    INIT,           // Первоначальная инициализация
-    STATE_UPDATE,
-    NAME_ACCEPTED,// Обновление состояния
+    INIT,
+    UPDATE,
+    NAME_ACCEPTED,
     NAME_REJECTED,
-    WIN
+    WIN,
+    PLAYER_LIST_UPDATE,
+    GAME_START,
+    GAME_PAUSED,
+    GAME_RESUMED,
+    LEADERBOARD
 }

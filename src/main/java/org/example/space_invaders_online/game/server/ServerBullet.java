@@ -1,10 +1,9 @@
 package org.example.space_invaders_online.game.server;
 
-import com.google.gson.Gson;
 import javafx.scene.shape.Shape;
-import org.example.space_invaders_online.game.gameWorld.GameObject;
+import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 
-public class ServerBullet extends GameObject {
+public class ServerBullet extends ServerGameObject {
     private final int ownerId;
     private double speed = 3.5;
     // NOTE: if you need to turn the player
@@ -27,10 +26,9 @@ public class ServerBullet extends GameObject {
         }
     }
 
-//    @Override
-//    public String serialize(Gson json) {
-//        return "";
-//    }
+    public SerializableBullet serialize() {
+        return new SerializableBullet(objectId, ownerId, (float)pos_x, (float)pos_y);
+    }
 
     @Override
     public boolean collidesWith(Shape other) {

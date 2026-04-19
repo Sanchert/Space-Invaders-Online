@@ -17,10 +17,7 @@ public class GameApplication extends Application {
     @Override
     public void start(Stage stage) {
         screenManager = new ScreenManager(stage);
-
-//        stage.initStyle(StageStyle.UNDECORATED);
         stage.setTitle("Space Invaders Online");
-
         screenManager.switchScreen(ScreenType.MAIN_MENU);
     }
 

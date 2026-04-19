@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<fx:root fx:id="Root" onKeyPressed="#onKeyPressed" onKeyReleased="#onKeyReleased" prefHeight="600.0" prefWidth="900.0" style="-fx-background-color: black;" type="AnchorPane" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.space_invaders_online.game.client.GameClientController">
+<fx:root fx:id="Root" onKeyPressed="#onKeyPressed" onKeyReleased="#onKeyReleased" prefHeight="600.0" prefWidth="900.0" style="-fx-background-color: black;" type="AnchorPane" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.space_invaders_online.game.client.MenuClientController">
     <children>
       <VBox fx:id="playerListPanel" layoutX="350.0" layoutY="82.0" prefHeight="200.0" prefWidth="110.0" style="-fx-background-color: #394945; -fx-border-width: 3; -fx-border-color: #47ff90;" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
       <AnchorPane fx:id="gameScreen" layoutX="7.0" layoutY="85.0" prefHeight="200.0" prefWidth="406.0" AnchorPane.bottomAnchor="60.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="120.0" AnchorPane.topAnchor="5.0" />
