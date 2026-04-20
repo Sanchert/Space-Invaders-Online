@@ -1,9 +1,7 @@
 // src/main/java/org/example/space_invaders_online/game/server/SerializablePlayer.java
 package org.example.space_invaders_online.game.server;
 
-import java.io.Serializable;
-
-public class SerializablePlayer implements Serializable {
+public class DTOPlayer {
 
     public int objectID;
     public double pos_x;
@@ -13,9 +11,9 @@ public class SerializablePlayer implements Serializable {
     public int score;
     public int colorID;
 
-    public SerializablePlayer() {}
+    public DTOPlayer() {}
 
-    public SerializablePlayer(int id, double pos_x, double pos_y, int shoots, int score, String name, int colorID) {
+    public DTOPlayer(int id, double pos_x, double pos_y, int shoots, int score, String name, int colorID) {
         this.objectID = id;
         this.pos_x = pos_x;
         this.pos_y = pos_y;

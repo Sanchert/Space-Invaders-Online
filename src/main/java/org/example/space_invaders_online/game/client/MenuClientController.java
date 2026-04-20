@@ -70,7 +70,7 @@ public class MenuClientController {
     private final Object actionLock = new Object();
     private String pendingAction = null;
 
-    private Map<RequestType, Request> requestHash;
+    private final Map<RequestType, Request> requestHash = new ConcurrentHashMap<>();
 
     // Отображение
     private boolean showLeaderboard = false;
@@ -82,6 +82,8 @@ public class MenuClientController {
         gameCanvas.requestFocus();
 
         setupEventHandlers();
+
+        initMyCommands();
 
         connectToServer();
 
@@ -150,7 +152,6 @@ public class MenuClientController {
         switch (message.type) {
             case INIT:
                 myPlayerId = message.playerId;
-                initMyCommands();
                 System.out.println("[CLIENT] My ID: " + myPlayerId);
                 break;
 
@@ -195,7 +196,7 @@ public class MenuClientController {
         requestHash.put(RequestType.DISCONNECT, new Request(RequestType.DISCONNECT, "", myPlayerId));
     }
 
-    private void updatePlayerPanels(List<SerializablePlayer> players) {
+    private void updatePlayerPanels(List<DTOPlayer> players) {
         if (playerListPanel == null || players == null) return;
 
         for (PlayerInfoPanel panel : playerInfoPanels.values()) {
@@ -204,7 +205,7 @@ public class MenuClientController {
 
         Set<Integer> activeIds = new HashSet<>();
 
-        for (SerializablePlayer sp : players) {
+        for (DTOPlayer sp : players) {
             activeIds.add(sp.objectID);
             PlayerInfoPanel panel = playerInfoPanels.get(sp.objectID);
 
@@ -230,11 +231,11 @@ public class MenuClientController {
         });
     }
 
-    private void updateGameState(SerializableGameState state) {
+    private void updateGameState(DTOGameState state) {
         cleanupRemovedObjects(state);
 
         if (state.players != null) {
-            for (SerializablePlayer sp : state.players) {
+            for (DTOPlayer sp : state.players) {
                 ClientPlayer player = remotePlayers.get(sp.objectID);
                 if (player != null) {
                     player.updateFromServer(sp.pos_x, sp.pos_y, sp.shoots, sp.name);
@@ -246,7 +247,7 @@ public class MenuClientController {
         }
 
         if (state.bullets != null) {
-            for (SerializableBullet sb : state.bullets) {
+            for (DTOBullet sb : state.bullets) {
                 ClientBullet bullet = remoteBullets.get(sb.objectID);
                 if (bullet == null) {
                     bullet = new ClientBullet(sb.objectID, 0,0);
@@ -257,7 +258,7 @@ public class MenuClientController {
         }
 
         if (state.targets != null) {
-            for (SerializableTarget st : state.targets) {
+            for (DTOTarget st : state.targets) {
                 ClientTarget target = remoteTargets.get(st.objectID);
                 if (target == null) {
                     target = new ClientTarget(st.objectID, 0,0);
@@ -270,7 +271,7 @@ public class MenuClientController {
         updatePlayerPanels(state.players);
     }
 
-    private void cleanupRemovedObjects(SerializableGameState newState) {
+    private void cleanupRemovedObjects(DTOGameState newState) {
 
         Set<Integer> objects = new HashSet<>();
 

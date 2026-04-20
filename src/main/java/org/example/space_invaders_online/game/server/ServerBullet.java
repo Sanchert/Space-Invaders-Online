@@ -6,8 +6,7 @@ import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 public class ServerBullet extends ServerGameObject {
     private final int ownerId;
     private double speed = 3.5;
-    // NOTE: if you need to turn the player
-    // moveDirection
+    // NOTE: if you need to turn the player - it's need moveDirection
 
     public ServerBullet(int id, int ownerId, double pos_x, double pos_y) {
         super(id, pos_x, pos_y);
@@ -26,12 +25,8 @@ public class ServerBullet extends ServerGameObject {
         }
     }
 
-    public SerializableBullet serialize() {
-        return new SerializableBullet(objectId, ownerId, (float)pos_x, (float)pos_y);
-    }
-
     @Override
-    public boolean collidesWith(Shape other) {
+    public boolean collidesWith(ServerGameObject other) {
         return false;
     }
 

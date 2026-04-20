@@ -12,12 +12,11 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import org.example.space_invaders_online.game.server.ServerMessage;
-import org.example.space_invaders_online.game.server.SerializableGameState;
-import org.example.space_invaders_online.game.server.SerializablePlayer;
-import org.example.space_invaders_online.game.server.SerializableBullet;
-import org.example.space_invaders_online.game.server.SerializableTarget;
+import org.example.space_invaders_online.game.server.DTOGameState;
+import org.example.space_invaders_online.game.server.DTOPlayer;
+import org.example.space_invaders_online.game.server.DTOBullet;
+import org.example.space_invaders_online.game.server.DTOTarget;
 import org.example.space_invaders_online.game.database.PlayerStats;
 
 import java.io.*;
@@ -228,7 +227,7 @@ public class GameClientController extends AnchorPane {
         }
     }
 
-    private void updatePlayerPanels(List<SerializablePlayer> players) {
+    private void updatePlayerPanels(List<DTOPlayer> players) {
         if (playerListPanel == null) return;
 
         Platform.runLater(() -> {
@@ -240,7 +239,7 @@ public class GameClientController extends AnchorPane {
             }
 
             if (players != null) {
-                for (SerializablePlayer sp : players) {
+                for (DTOPlayer sp : players) {
                     currentIds.add(sp.id);
 
                     PlayerInfoPanel panel = playerInfoPanels.get(sp.id);
@@ -277,13 +276,13 @@ public class GameClientController extends AnchorPane {
         });
     }
 
-    private void updateGameObjects(SerializableGameState state) {
+    private void updateGameObjects(DTOGameState state) {
         if (state == null) return;
 
         cleanupObjects(state);
 
         if (state.players != null) {
-            for (SerializablePlayer sp : state.players) {
+            for (DTOPlayer sp : state.players) {
                 ClientPlayer player = remotePlayers.get(sp.id);
                 if (player == null) {
                     Color color = getPlayerColor(sp.colorId);
@@ -296,7 +295,7 @@ public class GameClientController extends AnchorPane {
         }
 
         if (state.bullets != null) {
-            for (SerializableBullet sb : state.bullets) {
+            for (DTOBullet sb : state.bullets) {
                 ClientBullet bullet = remoteBullets.get(sb.id);
                 if (bullet == null) {
                     bullet = new ClientBullet(sb.id);
@@ -308,7 +307,7 @@ public class GameClientController extends AnchorPane {
         }
 
         if (state.targets != null) {
-            for (SerializableTarget st : state.targets) {
+            for (DTOTarget st : state.targets) {
                 if (st.alive) {
                     ClientTarget target = remoteTargets.get(st.id);
                     if (target == null) {
@@ -322,7 +321,7 @@ public class GameClientController extends AnchorPane {
         }
     }
 
-    private void cleanupObjects(SerializableGameState newState) {
+    private void cleanupObjects(DTOGameState newState) {
         if (newState == null) return;
 
         Set<Integer> currentPlayerIds = new HashSet<>();
@@ -341,7 +340,7 @@ public class GameClientController extends AnchorPane {
 
         Set<Integer> currentBulletIds = new HashSet<>();
         if (newState.bullets != null) {
-            for (SerializableBullet sb : newState.bullets) {
+            for (DTOBullet sb : newState.bullets) {
                 currentBulletIds.add(sb.id);
             }
         }
@@ -357,7 +356,7 @@ public class GameClientController extends AnchorPane {
 
         Set<Integer> currentTargetIds = new HashSet<>();
         if (newState.targets != null) {
-            for (SerializableTarget st : newState.targets) {
+            for (DTOTarget st : newState.targets) {
                 if (st.alive) {
                     currentTargetIds.add(st.id);
                 }

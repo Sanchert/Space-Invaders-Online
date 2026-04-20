@@ -3,7 +3,7 @@ package org.example.space_invaders_online.game.gameWorld;
 public abstract class ServerGameObject extends GameObject {
     // NOTE: can be Interface (IMonoBehaviour :D )
     public abstract void update();
-    public abstract boolean collidesWith();
+    public abstract boolean collidesWith(ServerGameObject other);
 
     public ServerGameObject(int id, double pos_x, double pos_y) {
         super(id);

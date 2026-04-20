@@ -220,9 +220,9 @@ public class GameWorld {
     public Map<Integer, ServerTarget> getTargets() { return targets; }
     public Map<Integer, ServerPlayer> getPlayers() { return players; }
 
-    public SerializableGameState serialize() {
+    public DTOGameState serialize() {
         // Сериализация состояния игры для отправки клиентам
-        return new SerializableGameState(players.values().stream().toList(),
+        return new DTOGameState(players.values().stream().toList(),
                                          bullets.values().stream().toList(),
                                          targets.values().stream().toList());
     }

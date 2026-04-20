@@ -34,8 +34,8 @@ public class ServerTarget extends ServerGameObject {
 //    TODO: let's do this!
 //    @Override
 // Добавить метод serialize в ServerTarget.java
-public SerializableTarget serialize() {
-    return new SerializableTarget(objectId, (float)pos_x, (float)pos_y, cost, !destroyed);
+public DTOTarget serialize() {
+    return new DTOTarget(objectId, (float)pos_x, (float)pos_y, cost, !destroyed);
 }
 
 //    TODO: let's do this!

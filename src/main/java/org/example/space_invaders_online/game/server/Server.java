@@ -4,10 +4,8 @@ package org.example.space_invaders_online.game.server;
 import com.google.gson.Gson;
 import org.example.space_invaders_online.game.gameWorld.GameWorld;
 import org.example.space_invaders_online.game.client.Request;
-import org.example.space_invaders_online.game.client.RequestType;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -94,6 +92,7 @@ public class Server {
     private volatile boolean gameRunning = false;
 
     private final Gson gson = new Gson();
+    private DTOGameState dtoGameState = new DTOGameState();
 
     public void start() {
         try {
@@ -389,35 +388,35 @@ public class Server {
         if (gameWorld == null) return;
 
         // Конвертируем в сериализуемые объекты
-        List<SerializablePlayer> serializablePlayers = new ArrayList<>();
+        List<DTOPlayer> serializablePlayers = new ArrayList<>();
         for (ServerPlayer player : gameWorld.getPlayers().values()) {
             if (!player.isDestroyed()) {
-                serializablePlayers.add(player.toSerializable());
+                serializablePlayers.add(player);
             }
         }
 
-        List<SerializableBullet> serializableBullets = new ArrayList<>();
+        List<DTOBullet> serializableBullets = new ArrayList<>();
         for (ServerBullet bullet : gameWorld.getBullets().values()) {
             if (!bullet.isDestroyed()) {
                 serializableBullets.add(bullet.toSerializable());
             }
         }
 
-        List<SerializableTarget> serializableTargets = new ArrayList<>();
+        List<DTOTarget> serializableTargets = new ArrayList<>();
         for (ServerTarget target : gameWorld.getTargets().values()) {
             if (!target.isDestroyed()) {
                 serializableTargets.add(target.toSerializable());
             }
         }
 
-        SerializableGameState state = new SerializableGameState(
+        DTOGameState state = new DTOGameState(
                 serializablePlayers,
                 serializableBullets,
                 serializableTargets
         );
 
         ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.STATE_UPDATE;
+        message.type = ServerAnswerType.UPDATE;
         message.currentGameState = state;
 
         String jsonMessage = gson.toJson(message);
@@ -493,29 +492,29 @@ public class Server {
         }
     }
 
-    private SerializableGameState serializeGameState() {
-        List<SerializablePlayer> serializedPlayers = new ArrayList<>();
+    private DTOGameState serializeGameState() {
+        List<DTOPlayer> serializedPlayers = new ArrayList<>();
         for (ServerPlayer player : gamePlayers.values()) {
             if (!player.isDestroyed()) {
                 serializedPlayers.add(player.serialize());
             }
         }
 
-        List<SerializableBullet> serializedBullets = new ArrayList<>();
+        List<DTOBullet> serializedBullets = new ArrayList<>();
         for (ServerBullet bullet : gameWorld.getBullets().values()) {
             if (!bullet.isDestroyed()) {
                 serializedBullets.add(bullet.serialize());
             }
         }
 
-        List<SerializableTarget> serializedTargets = new ArrayList<>();
+        List<DTOTarget> serializedTargets = new ArrayList<>();
         for (ServerTarget target : gameWorld.getTargets().values()) {
             if (!target.isDestroyed()) {
                 serializedTargets.add(target.serialize());
             }
         }
 
-        return new SerializableGameState(serializedPlayers, serializedBullets, serializedTargets);
+        return new DTOGameState(serializedPlayers, serializedBullets, serializedTargets);
     }
 
     private void sendLeaderboard(int playerId) {

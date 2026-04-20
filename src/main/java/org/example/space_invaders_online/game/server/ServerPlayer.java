@@ -90,8 +90,8 @@ public class ServerPlayer extends ServerGameObject {
         this.shoots = 10;
     }
 
-    public SerializablePlayer serialize() {
-        return new SerializablePlayer(
+    public DTOPlayer serialize() {
+        return new DTOPlayer(
                 objectId, name, (float)pos_x, (float)pos_y,
                 shoots, score, colorId, !destroyed
         );

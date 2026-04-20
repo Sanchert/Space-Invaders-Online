@@ -1,15 +1,14 @@
 package org.example.space_invaders_online.game.server;
-import java.io.Serializable;
 
-public class SerializableBullet implements Serializable {
+public class DTOBullet {
     public int objectID;
     public int ownerId;
     public double pos_x;
     public double pos_y;
 
-    public SerializableBullet() {}
+    public DTOBullet() {}
 
-    public SerializableBullet(int id, int ownerId, double pos_x, double pos_y) {
+    public DTOBullet(int id, int ownerId, double pos_x, double pos_y) {
         this.objectID = id;
         this.ownerId = ownerId;
         this.pos_x = pos_x;
