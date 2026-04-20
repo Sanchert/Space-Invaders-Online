@@ -7,6 +7,7 @@ module org.example.space_invaders_online {
     requires javafx.media;
     requires jakarta.persistence;
     requires org.hibernate.orm.core;
+    requires org.example.space_invaders_online;
 
     opens org.example.space_invaders_online to javafx.fxml;
     exports org.example.space_invaders_online;
