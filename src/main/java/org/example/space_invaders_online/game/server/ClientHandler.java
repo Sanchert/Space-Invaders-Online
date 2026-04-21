@@ -3,10 +3,7 @@ package org.example.space_invaders_online.game.server;
 import com.google.gson.Gson;
 import org.example.space_invaders_online.game.client.Request;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class ClientHandler implements Runnable {
@@ -14,8 +11,8 @@ public class ClientHandler implements Runnable {
     private final int playerId;
     private final Server server;
     private volatile boolean connected = true;
-    private final ObjectOutputStream oos;
-    private final ObjectInputStream ois;
+    private final PrintWriter out;
+    private final BufferedReader in;
     private final Gson json = new Gson();
 
     public ClientHandler(Socket socket, int playerId, Server server) throws IOException {
@@ -23,8 +20,8 @@ public class ClientHandler implements Runnable {
         this.playerId = playerId;
         this.server = server;
 
-        this.oos = new ObjectOutputStream(socket.getOutputStream());
-        this.ois = new ObjectInputStream(socket.getInputStream());
+        this.out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
+        this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
     public final int getPlayerId() {
@@ -35,7 +32,7 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             while (connected) {
-                String inputLine = ois.readUTF();
+                String inputLine = in.readLine();
                 Request request = json.fromJson(inputLine, Request.class);
                 server.handleClientRequest(playerId, request);
             }
@@ -55,9 +52,9 @@ public class ClientHandler implements Runnable {
     }
 
     public void sendMessage(String message) throws IOException {
-        if (connected && oos != null) {
-            oos.writeUTF(message);
-            oos.flush();
+        if (connected && out != null) {
+            out.write(message);
+            out.flush();
         }
     }
 }

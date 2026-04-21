@@ -5,14 +5,12 @@ public class DTOTarget {
     public double pos_x;
     public double pos_y;
     public int cost;
-    public boolean isDestroyed;
     public DTOTarget() {}
 
-    public DTOTarget(int id, double pos_x, double pos_y, int cost, boolean isDestroyed) {
+    public DTOTarget(int id, double pos_x, double pos_y, int cost) {
         this.objectID = id;
         this.pos_x = pos_x;
         this.pos_y = pos_y;
         this.cost = cost;
-        this.isDestroyed = isDestroyed;
     }
 }

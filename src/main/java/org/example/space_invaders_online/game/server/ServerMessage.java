@@ -5,10 +5,8 @@ import java.util.List;
 
 public class ServerMessage {
     public ServerAnswerType type;
-    public int playerId;
     public DTOGameState currentGameState;
     public String args;
-//    public List<DTOPlayer> players;
-//    public List<PlayerStats> leaderboard; // статистика
+    public List<PlayerStats> leaderboard; // статистика
 }
 

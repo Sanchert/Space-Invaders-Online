@@ -94,10 +94,6 @@ public class MenuClientController {
         readerThread = new Thread(this::readLoop);
         readerThread.setDaemon(true);
         readerThread.start();
-
-//        Thread renderThread = new Thread(this::renderLoop);
-//        renderThread.setDaemon(true);
-//        renderThread.start();
     }
 
     private void setupEventHandlers() {
