@@ -1,43 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.control.ScrollPane?>
 
-<StackPane fx:id="rootPane"
-           stylesheets="@../css/common.css,@../css/game.css"
-           styleClass="game-root"
-           xmlns="http://javafx.com/javafx/8"
-           xmlns:fx="http://javafx.com/fxml"
-           fx:controller="org.example.space_invaders_online.game.sceneController.controllers.GameScreenController">
+<HBox fx:id="gameRootHBox"
+      alignment="CENTER_LEFT"
+      fillHeight="true"
+      minWidth="0"
+      minHeight="0"
+      stylesheets="@../css/common.css,@../css/game.css"
+      styleClass="game-root-hbox"
+      xmlns="http://javafx.com/javafx/8"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.example.space_invaders_online.game.sceneController.controllers.GameScreenController">
 
-    <!-- Игровой Canvas -->
-    <Canvas fx:id="gameCanvas"
-            width="1280"
-            height="720"
-            styleClass="game-canvas"/>
+    <!-- minWidth=0: иначе дочерний layout может требовать ширину больше окна и обрезать HUD / поле -->
+    <StackPane fx:id="gameStack" minWidth="0" minHeight="0" HBox.hgrow="ALWAYS">
 
-    <!-- Кнопки управления [PAUSE / RESUME] -->
-    <HBox fx:id="gameControlButtons" styleClass="control-button-container">
-        <Button fx:id="resumeButton" styleClass="control-button" id="resume-button" />
-        <Button fx:id="pauseButton"  styleClass="control-button" id="pause-button"  />
-    </HBox>
+        <Canvas fx:id="gameCanvas"
+                styleClass="game-canvas"/>
 
-    <!-- Оверлей паузы (изначально скрыт) -->
-    <VBox fx:id="pauseOverlay" styleClass="pause-overlay">
+        <HBox fx:id="gameControlButtons" styleClass="control-button-container" StackPane.alignment="TOP_RIGHT">
+            <Button fx:id="resumeButton" styleClass="control-button" id="resume-button" />
+            <Button fx:id="pauseButton" styleClass="control-button" id="pause-button" />
+        </HBox>
 
-        <Label text="PAUSED"
-               styleClass="pause-title"/>
+        <Label fx:id="winOverlayLabel"
+               managed="false"
+               styleClass="pause-title"
+               text=""
+               visible="false"
+               StackPane.alignment="TOP_CENTER">
+            <StackPane.margin>
+                <Insets top="24.0" />
+            </StackPane.margin>
+        </Label>
 
-        <Label text="Press ESC to resume"
-               styleClass="pause-hint"/>
+        <VBox fx:id="pauseOverlay" styleClass="pause-overlay" visible="false" managed="false">
+            <Label text="PAUSED" styleClass="pause-title"/>
+            <Label text="Press ESC to resume" styleClass="pause-hint"/>
+            <Button fx:id="exitToMenuBtn" text="EXIT TO MENU" styleClass="exit-menu-button"/>
+        </VBox>
+    </StackPane>
 
-        <Button fx:id="exitToMenuBtn"
-                text="EXIT TO MENU"
-                styleClass="exit-menu-button"/>
-
+    <VBox fx:id="gameHudPanel"
+          minWidth="180"
+          prefWidth="220"
+          maxWidth="220"
+          HBox.hgrow="NEVER"
+          styleClass="game-hud-sidebar"
+          spacing="10">
+        <padding>
+            <Insets bottom="16.0" left="8.0" right="12.0" top="16.0" />
+        </padding>
+        <Label text="Игроки" styleClass="game-hud-title" />
+        <ScrollPane fx:id="gameHudScroll"
+                    fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    minHeight="0"
+                    styleClass="game-hud-scroll"
+                    vbarPolicy="AS_NEEDED"
+                    VBox.vgrow="ALWAYS">
+            <VBox fx:id="gameHudRows" spacing="8" styleClass="game-hud-rows" />
+        </ScrollPane>
     </VBox>
-
-</StackPane>
+</HBox>

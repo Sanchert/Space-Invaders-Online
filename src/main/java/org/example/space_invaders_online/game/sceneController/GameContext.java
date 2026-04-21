@@ -1,11 +1,13 @@
 package org.example.space_invaders_online.game.sceneController;
 
+import org.example.space_invaders_online.game.client.OnlineMatchClient;
+
 public class GameContext {
     private String playerName;
-    private GameMode gameMode;  // SINGLE, ONLINE
+    private GameMode gameMode;
     private String winner;
     private int score;
-    // другие данные
+    private OnlineMatchClient onlineMatchClient;
 
     public enum GameMode {
         SINGLE, ONLINE
@@ -23,4 +25,7 @@ public class GameContext {
 
     public int getScore() { return score; }
     public void setScore(int score) { this.score = score; }
+
+    public OnlineMatchClient getOnlineMatchClient() { return onlineMatchClient; }
+    public void setOnlineMatchClient(OnlineMatchClient onlineMatchClient) { this.onlineMatchClient = onlineMatchClient; }
 }

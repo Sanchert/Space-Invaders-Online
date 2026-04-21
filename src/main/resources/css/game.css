@@ -1,13 +1,36 @@
 /* ========== GAME.CSS ========== */
 
-.game-root {
+.game-root-hbox {
     -fx-alignment: center;
-    -fx-background-color: black;
+    -fx-background-color: #050810;
+}
+
+.game-hud-sidebar {
+    -fx-background-color: rgba(20, 28, 40, 0.92);
+    -fx-border-color: #47ff90;
+    -fx-border-width: 0 0 0 2;
+}
+
+.game-hud-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00ffc3;
+}
+
+.game-hud-scroll {
+    -fx-background-color: transparent;
+}
+
+.game-hud-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.game-hud-rows {
+    -fx-padding: 4 0 8 0;
 }
 
 .game-canvas {
     -fx-focus-traversable: true;
-    -fx-background-color: black;
 }
 
 .control-button-container {
@@ -50,11 +73,7 @@
 .pause-overlay {
     -fx-background-color: rgba(0, 0, 0, 0.8);
     -fx-alignment: center;
-    -fx-spacing: 20;
-    -fx-alignment: CENTER;
-    -fx-spacing: 30
-    -fx-visible: false;
-    -fx-managed: false;
+    -fx-spacing: 30;
 }
 
 .pause-title {

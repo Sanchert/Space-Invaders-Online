@@ -8,10 +8,12 @@ public class PlayerInfoPanel extends VBox {
     private Label scoreLabel;
     private Label shootsLabel;
     private int playerId;
+    private final int colorId;
     private String currentName;
 
     public PlayerInfoPanel(int playerId, String name, int shoots, int colorId) {
         this.playerId = playerId;
+        this.colorId = colorId;
         this.currentName = name;
 
         setStyle("-fx-padding: 5; -fx-border-color: #333; -fx-border-width: 1; -fx-background-color: #2c2c2c;");
@@ -36,6 +38,8 @@ public class PlayerInfoPanel extends VBox {
             setStyle("-fx-padding: 5; -fx-border-color: #666; -fx-background-color: #1a1a1a;");
         } else {
             nameLabel.setText(currentName);
+            nameLabel.setStyle("-fx-text-fill: " + getColorHex(colorId) + "; -fx-font-weight: bold;");
+            setStyle("-fx-padding: 5; -fx-border-color: #333; -fx-border-width: 1; -fx-background-color: #2c2c2c;");
         }
     }
 

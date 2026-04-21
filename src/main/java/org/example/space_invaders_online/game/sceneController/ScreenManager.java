@@ -1,13 +1,14 @@
 package org.example.space_invaders_online.game.sceneController;
 
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-
-import javafx.application.Platform;
 
 public class ScreenManager {
 
@@ -49,7 +50,10 @@ public class ScreenManager {
             });
 
             Parent root = loader.load();
-            Scene scene = new Scene(root, 1920, 1080);
+            Rectangle2D vb = Screen.getPrimary().getVisualBounds();
+            double sceneW = Math.min(1920, vb.getWidth());
+            double sceneH = Math.min(1080, vb.getHeight());
+            Scene scene = new Scene(root, sceneW, sceneH);
 
             stage.setScene(scene);
             stage.show();

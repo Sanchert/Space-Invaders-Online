@@ -1,72 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<fx:root fx:id="Root" onKeyPressed="#onKeyPressed" onKeyReleased="#onKeyReleased" prefHeight="600.0" prefWidth="900.0" style="-fx-background-color: black;" type="AnchorPane" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.space_invaders_online.game.client.MenuClientController">
-    <children>
-      <VBox fx:id="playerListPanel" layoutX="350.0" layoutY="82.0" prefHeight="200.0" prefWidth="110.0" style="-fx-background-color: #394945; -fx-border-width: 3; -fx-border-color: #47ff90;" AnchorPane.bottomAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
-      <AnchorPane fx:id="gameScreen" layoutX="7.0" layoutY="85.0" prefHeight="200.0" prefWidth="406.0" AnchorPane.bottomAnchor="60.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="120.0" AnchorPane.topAnchor="5.0" />
-        <AnchorPane layoutY="350.0" minHeight="-Infinity" minWidth="-Infinity" pickOnBounds="false" prefHeight="50.0" prefWidth="774.0" style="-fx-background-color: #394945; -fx-border-color: #47ff90; -fx-border-width: 3;" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="120.0">
-            <children>
-                <Button layoutX="14.0" layoutY="13.0" mnemonicParsing="false" onAction="#onStartBtnClick" style="-fx-background-color: black;" text="Start" textAlignment="CENTER" textFill="#00ffc3">
-                    <font>
-                        <Font name="Courier New Bold" size="13.0" />
-                    </font>
-                </Button>
-                <Button layoutX="83.0" layoutY="13.0" mnemonicParsing="false" onAction="#onExitBtnClick" style="-fx-background-color: black;" text="Exit" textFill="#00ffc3">
-                    <font>
-                        <Font name="Courier New Bold" size="13.0" />
-                    </font>
-                </Button>
-                <Button layoutX="288.0" layoutY="13.0" mnemonicParsing="false" onAction="#onResumeBtnClick" style="-fx-background-color: black;" text="Resume" textFill="#00ffc3">
-                    <font>
-                        <Font name="Courier New Bold" size="13.0" />
-                    </font>
-                </Button>
-                <Button layoutX="223.0" layoutY="13.0" mnemonicParsing="false" onAction="#onPauseBtnClick" style="-fx-background-color: black;" text="Pause" textFill="#00ffc3">
-                    <font>
-                        <Font name="Courier New Bold" size="13.0" />
-                    </font>
-                </Button>
-            </children>
-        </AnchorPane>
-      <AnchorPane fx:id="startWindow" layoutX="5.0" layoutY="-2.0" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: rgba(128,128,128, 0.55);" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <children>
-            <AnchorPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #000; -fx-border-radius: 3; -fx-border-color: #47ff90; -fx-border-width: 3; -fx-background-radius: 3;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-               <children>
-                  <Label alignment="CENTER" contentDisplay="CENTER" layoutX="9.600000000000001" layoutY="9.600000000000001" prefHeight="66.0" prefWidth="187.0" text="Enter Your Name" textAlignment="CENTER" textFill="#00ffc3" textOverrun="CLIP" wrapText="true" AnchorPane.bottomAnchor="128.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-                     <font>
-                        <Font name="Courier New Bold" size="30.0" />
-                     </font>
-                  </Label>
-                  <TextField id="textField" fx:id="textField" layoutX="276.0" layoutY="190.0" AnchorPane.bottomAnchor="180.0" AnchorPane.leftAnchor="275.0" AnchorPane.rightAnchor="275.0" AnchorPane.topAnchor="190.0" />
-                  <Button layoutX="305.0" layoutY="254.0" mnemonicParsing="false" onAction="#onEnterBtnClick" prefHeight="39.0" prefWidth="90.0" style="-fx-background-color: #2c534f;" text="Enter" textAlignment="CENTER" textFill="#00ffe1">
-                     <font>
-                        <Font name="Courier New Bold" size="20.0" />
-                     </font>
-                  </Button>
-                  <Label fx:id="warningLabel" alignment="CENTER" contentDisplay="CENTER" layoutX="14.0" layoutY="355.0" prefHeight="36.0" prefWidth="451.0" text="This name already exist!" textFill="#ff8100" textOverrun="CLIP" visible="false" wrapText="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
-                     <font>
-                        <Font name="Courier New Bold" size="19.0" />
-                     </font>
-                  </Label>
-               </children>
-            </AnchorPane>
-         </children>
-      </AnchorPane>
-      <Label fx:id="winLabel" layoutX="287.0" layoutY="185.0" text="#00ffc3" textFill="#00ffc3">
-         <font>
-            <Font name="Courier New Bold" size="30.0" />
-         </font>
-      </Label>
-    </children>
-    <opaqueInsets>
-        <Insets />
-    </opaqueInsets>
-</fx:root>
+<!-- Устарело: лобби в fxml/menu.fxml, игра в fxml/game.fxml -->
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label layoutX="24.0" layoutY="24.0" text="Use menu.fxml (lobby) and game.fxml (match)." />
+   </children>
+</AnchorPane>

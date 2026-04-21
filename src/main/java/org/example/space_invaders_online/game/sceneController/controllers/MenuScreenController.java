@@ -6,21 +6,27 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.example.space_invaders_online.game.client.OnlineMatchClient;
 import org.example.space_invaders_online.game.sceneController.GameContext;
 import org.example.space_invaders_online.game.sceneController.ScreenManager;
 import org.example.space_invaders_online.game.sceneController.ScreenType;
 
+import java.io.IOException;
+
 public class MenuScreenController extends BaseController {
-    @FXML private VBox splashContent;          // Только текст "press any button"
-    @FXML private VBox mainMenuContent;        // Кнопки
-    @FXML private VBox nameInputContent;       // Ввод имени
 
-    @FXML private Label gameTitle;     // Заголовок (всегда виден в SPLASH/MAIN)
+    @FXML private StackPane rootPane;
+    @FXML private StackPane contentContainer;
+    @FXML private VBox splashContent;
+    @FXML private VBox mainMenuContent;
+    @FXML private VBox nameInputContent;
 
-    @FXML private Label     pressAnyKeyLabel;
+    @FXML private Label gameTitle;
+    @FXML private Label pressAnyKeyLabel;
     @FXML private TextField nameField;
-    @FXML private Label     errorLabel;
+    @FXML private Label errorLabel;
 
     @FXML private Button singlePlayerBtn;
     @FXML private Button onlineGameBtn;
@@ -29,13 +35,23 @@ public class MenuScreenController extends BaseController {
     @FXML private Button confirmNameBtn;
     @FXML private Button backToMenuBtn;
 
+    @FXML private VBox lobbyContent;
+    @FXML private Label lobbyStatusLabel;
+    @FXML private VBox playersList;
+    @FXML private Button readyBtn;
+    @FXML private Button lobbyLeaderboardBtn;
+    @FXML private Button lobbyBackBtn;
+
     public MenuScreenController(ScreenManager screenManager, GameContext gameContext) {
         super(screenManager, gameContext);
     }
 
     @FXML
     public void initialize() {
-        // === Настройка кнопок ===
+        singlePlayerBtn.setDisable(true);
+        singlePlayerBtn.setVisible(false);
+        singlePlayerBtn.setManaged(false);
+
         singlePlayerBtn.setOnAction(e -> onSinglePlayer());
         onlineGameBtn.setOnAction(e -> onOnlineGame());
         optionsBtn.setOnAction(e -> onOptions());
@@ -43,10 +59,14 @@ public class MenuScreenController extends BaseController {
         confirmNameBtn.setOnAction(e -> onConfirmName());
         backToMenuBtn.setOnAction(e -> showMainMenu());
 
+        lobbyBackBtn.setOnAction(e -> onLobbyBack());
+
         showSplash();
 
         Platform.runLater(() -> {
-            screenManager.getStage().getScene().addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
+            if (screenManager.getStage().getScene() != null) {
+                screenManager.getStage().getScene().addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
+            }
         });
     }
 
@@ -58,7 +78,7 @@ public class MenuScreenController extends BaseController {
     }
 
     private void showSplash() {
-        // Заголовок всегда виден в SPLASH и MAIN MENU
+        hideLobby();
         gameTitle.setVisible(true);
         gameTitle.setManaged(true);
 
@@ -73,6 +93,7 @@ public class MenuScreenController extends BaseController {
     }
 
     private void showMainMenu() {
+        hideLobby();
         gameTitle.setVisible(true);
         gameTitle.setManaged(true);
 
@@ -87,6 +108,7 @@ public class MenuScreenController extends BaseController {
     }
 
     private void showNameInput() {
+        hideLobby();
         gameTitle.setVisible(false);
         gameTitle.setManaged(false);
 
@@ -106,6 +128,33 @@ public class MenuScreenController extends BaseController {
         nameField.requestFocus();
     }
 
+    private void showLobby() {
+        contentContainer.setVisible(false);
+        contentContainer.setManaged(false);
+
+        lobbyContent.setVisible(true);
+        lobbyContent.setManaged(true);
+    }
+
+    private void hideLobby() {
+        lobbyContent.setVisible(false);
+        lobbyContent.setManaged(false);
+
+        contentContainer.setVisible(true);
+        contentContainer.setManaged(true);
+    }
+
+    private void onLobbyBack() {
+        OnlineMatchClient client = gameContext.getOnlineMatchClient();
+        if (client != null) {
+            client.shutdownForMenuBack();
+            gameContext.setOnlineMatchClient(null);
+        }
+        playersList.getChildren().clear();
+        hideLobby();
+        showMainMenu();
+    }
+
     private void onSinglePlayer() {
         gameContext.setGameMode(GameContext.GameMode.SINGLE);
         showNameInput();
@@ -121,6 +170,11 @@ public class MenuScreenController extends BaseController {
     }
 
     private void onExit() {
+        OnlineMatchClient client = gameContext.getOnlineMatchClient();
+        if (client != null) {
+            client.shutdownForMenuBack();
+            gameContext.setOnlineMatchClient(null);
+        }
         Platform.exit();
         System.exit(0);
     }
@@ -141,9 +195,51 @@ public class MenuScreenController extends BaseController {
         gameContext.setPlayerName(name);
 
         if (gameContext.getGameMode() == GameContext.GameMode.SINGLE) {
-            screenManager.switchScreen(ScreenType.GAME, gameContext);
-        } else {
-            screenManager.switchScreen(ScreenType.LOBBY, gameContext);
+            showError("Single player is not available yet");
+            return;
+        }
+
+        OnlineMatchClient existing = gameContext.getOnlineMatchClient();
+        if (existing != null && existing.isConnected()) {
+            existing.submitPlayerName(name);
+            showLobby();
+            if (lobbyStatusLabel != null) {
+                lobbyStatusLabel.setText("Checking name...");
+            }
+            return;
+        }
+
+        if (existing != null) {
+            existing.shutdownForMenuBack();
+            gameContext.setOnlineMatchClient(null);
+        }
+
+        startOnlineSession(name);
+    }
+
+    private void startOnlineSession(String name) {
+        try {
+            OnlineMatchClient client = new OnlineMatchClient();
+            gameContext.setOnlineMatchClient(client);
+            client.bindLobby(
+                    playersList,
+                    lobbyStatusLabel,
+                    readyBtn,
+                    lobbyLeaderboardBtn,
+                    () -> screenManager.switchScreen(ScreenType.GAME, gameContext),
+                    () -> Platform.runLater(() -> {
+                        hideLobby();
+                        showNameInput();
+                    })
+            );
+            client.beginConnection(name);
+            if (lobbyStatusLabel != null) {
+                lobbyStatusLabel.setText("Connecting...");
+            }
+            showLobby();
+        } catch (IOException e) {
+            gameContext.setOnlineMatchClient(null);
+            showError("Cannot connect to server: " + e.getMessage());
         }
     }
 

@@ -1,6 +1,5 @@
 package org.example.space_invaders_online.game.server;
 
-import javafx.scene.shape.Shape;
 import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 
 public class ServerBullet extends ServerGameObject {
@@ -20,7 +19,7 @@ public class ServerBullet extends ServerGameObject {
     @Override
     public void update() {
         this.pos_x += this.speed;
-        if (this.pos_x > 800) {
+        if (this.pos_x > 920) {
             destroyed = true;
         }
     }
@@ -33,4 +32,9 @@ public class ServerBullet extends ServerGameObject {
     public int getOwnerId() {
         return this.ownerId;
     }
+
+    public DTOBullet toSerializable() {
+        return new DTOBullet(objectId, ownerId, pos_x, pos_y);
+    }
 }
+

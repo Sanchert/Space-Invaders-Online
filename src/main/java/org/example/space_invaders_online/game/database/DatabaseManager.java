@@ -2,6 +2,7 @@ package org.example.space_invaders_online.game.database;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 
@@ -15,15 +16,15 @@ public class DatabaseManager {
         try {
             Configuration configuration = new Configuration();
 
-            // Настройки H2 (можно заменить на PostgreSQL)
-            configuration.setProperty("hibernate.connection.driver_class", "org.h2.Driver");
-            configuration.setProperty("hibernate.connection.url", "jdbc:h2:./space_invaders_db;DB_CLOSE_DELAY=-1");
-            configuration.setProperty("hibernate.connection.username", "sa");
-            configuration.setProperty("hibernate.connection.password", "");
-            configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+            // Настройки PostgreSQL
+            configuration.setProperty("hibernate.connection.driver_class", "org.postgresql.Driver");
+            configuration.setProperty("hibernate.connection.url", "jdbc:postgresql://localhost:5432/space_invaders_db");
+            configuration.setProperty("hibernate.connection.username", "postgres");
+            configuration.setProperty("hibernate.connection.password", "1234");
+            configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
             configuration.setProperty("hibernate.hbm2ddl.auto", "update");
-            configuration.setProperty("hibernate.show_sql", "true");
-            configuration.setProperty("hibernate.format_sql", "true");
+            configuration.setProperty("hibernate.show_sql", "false");
+            configuration.setProperty("hibernate.format_sql", "false");
 
             configuration.addAnnotatedClass(PlayerStats.class);
 
@@ -89,7 +90,10 @@ public class DatabaseManager {
     public List<PlayerStats> getLeaderboard() {
         try (Session session = sessionFactory.openSession()) {
             Query<PlayerStats> query = session.createQuery(
-                    "FROM PlayerStats ORDER BY wins DESC, getAccuracy() DESC", PlayerStats.class);
+                    "FROM PlayerStats " +
+                            "ORDER BY wins DESC, " +
+                            "CASE WHEN totalShots = 0 THEN 0.0 ELSE (totalHits * 100.0 / totalShots) END DESC",
+                    PlayerStats.class);
             return query.setMaxResults(10).list();
         }
     }

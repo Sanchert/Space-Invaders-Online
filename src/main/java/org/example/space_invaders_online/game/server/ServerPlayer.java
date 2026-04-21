@@ -1,6 +1,5 @@
 package org.example.space_invaders_online.game.server;
 
-import javafx.scene.shape.Shape;
 import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 import org.example.space_invaders_online.game.client.MoveDirection;
 
@@ -21,7 +20,7 @@ public class ServerPlayer extends ServerGameObject {
         this.shoots = shoots;
         this.colorId = colorId;
         this.score = 0;
-        this.speed = 2.0;
+        this.speed = 6.0;
     }
 
     @Override
@@ -32,7 +31,7 @@ public class ServerPlayer extends ServerGameObject {
     }
 
     @Override
-    public boolean collidesWith(Shape other) {
+    public boolean collidesWith(ServerGameObject other) {
         return false;
     }
 
@@ -92,8 +91,14 @@ public class ServerPlayer extends ServerGameObject {
 
     public DTOPlayer serialize() {
         return new DTOPlayer(
-                objectId, name, (float)pos_x, (float)pos_y,
-                shoots, score, colorId, !destroyed
+                objectId,
+                pos_x,
+                pos_y,
+                shoots,
+                score,
+                name != null ? name : "",
+                colorId
         );
     }
 }
+

@@ -1,6 +1,5 @@
 package org.example.space_invaders_online.game.server;
 
-import javafx.scene.shape.Shape;
 import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 import org.example.space_invaders_online.game.client.MoveDirection;
 
@@ -31,16 +30,13 @@ public class ServerTarget extends ServerGameObject {
     public void update() {
         this.move();
     }
-//    TODO: let's do this!
-//    @Override
-// Добавить метод serialize в ServerTarget.java
-public DTOTarget serialize() {
-    return new DTOTarget(objectId, (float)pos_x, (float)pos_y, cost, !destroyed);
-}
 
-//    TODO: let's do this!
+    public DTOTarget serialize() {
+        return new DTOTarget(objectId, pos_x, pos_y, cost);
+    }
+
     @Override
-    public boolean collidesWith(Shape other) {
+    public boolean collidesWith(ServerGameObject other) {
         return false;
     }
 

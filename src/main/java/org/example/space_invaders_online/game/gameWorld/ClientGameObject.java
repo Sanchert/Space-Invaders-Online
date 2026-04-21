@@ -12,4 +12,12 @@ public abstract class ClientGameObject extends GameObject {
         this.pos_x = pos_x;
         this.pos_y = pos_y;
     }
+
+    public double getPosX() {
+        return pos_x;
+    }
+
+    public double getPosY() {
+        return pos_y;
+    }
 }

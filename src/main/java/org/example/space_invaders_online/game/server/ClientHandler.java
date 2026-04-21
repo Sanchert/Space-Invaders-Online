@@ -33,6 +33,9 @@ public class ClientHandler implements Runnable {
         try {
             while (connected) {
                 String inputLine = in.readLine();
+                if (inputLine == null) {
+                    break;
+                }
                 Request request = json.fromJson(inputLine, Request.class);
                 server.handleClientRequest(playerId, request);
             }
@@ -53,7 +56,7 @@ public class ClientHandler implements Runnable {
 
     public void sendMessage(String message) throws IOException {
         if (connected && out != null) {
-            out.write(message);
+            out.println(message);
             out.flush();
         }
     }

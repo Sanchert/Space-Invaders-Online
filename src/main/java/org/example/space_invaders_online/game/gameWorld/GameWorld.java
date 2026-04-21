@@ -6,13 +6,14 @@ import org.example.space_invaders_online.game.client.MoveDirection;
 import org.example.space_invaders_online.game.client.Request;
 import org.example.space_invaders_online.game.server.*;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GameWorld {
     private String winner = null;
-    private final Server server; // null для одиночной игры
+    private final Server server;
     private final Map<Integer, ServerGameObject> objects = new ConcurrentHashMap<>();
     private final Map<Integer, ServerPlayer> players = new ConcurrentHashMap<>();
     private final Map<Integer, ServerBullet> bullets = new ConcurrentHashMap<>();
@@ -21,7 +22,6 @@ public class GameWorld {
     private final AtomicInteger nextObjectId = new AtomicInteger(1);
     private double playerStartPosY = 60.0;
 
-    // Для одиночной игры
     private int currentScore = 0;
     private static final int WIN_SCORE = 6;
     private static final int NEAR_TARGET_POINTS = 1;
@@ -31,18 +31,33 @@ public class GameWorld {
         this.server = server;
     }
 
-    public void init() {
-        playerStartPosY = 60.0;
+    /**
+     * Загружает матч: регистрирует игроков, затем выдаёт id мишеням выше любого id игрока.
+     */
+    public void loadMatch(Collection<ServerPlayer> roster) {
         objects.clear();
         players.clear();
         bullets.clear();
         targets.clear();
+        winner = null;
+        playerStartPosY = 60.0;
 
-        // Создаём мишени: ближние и дальние
-        double x = 270.0;
+        for (ServerPlayer p : roster) {
+            objects.put(p.objectId, p);
+            players.put(p.objectId, p);
+        }
+
+        int maxPlayerId = players.keySet().stream().mapToInt(Integer::intValue).max().orElse(0);
+        nextObjectId.set(maxPlayerId + 1);
+
+        spawnInitialTargets();
+    }
+
+    /** Мишени справа от игроков (логическая ширина поля до ~800 по X снаряда). */
+    private void spawnInitialTargets() {
+        double x = 620.0;
         double y = 30.0;
 
-        // Ближние мишени (слева)
         for (int i = 0; i < 3; i++) {
             ServerTarget target = new ServerTarget(nextObjectId.getAndIncrement(), x, y, NEAR_TARGET_POINTS);
             objects.put(target.objectId, target);
@@ -51,8 +66,7 @@ public class GameWorld {
             y += 4.0;
         }
 
-        // Дальние мишени (справа)
-        x = 450.0;
+        x = 740.0;
         y = 30.0;
         for (int i = 0; i < 2; i++) {
             ServerTarget target = new ServerTarget(nextObjectId.getAndIncrement(), x, y, FAR_TARGET_POINTS);
@@ -108,7 +122,6 @@ public class GameWorld {
     }
 
     public void update() {
-        // Обновляем все объекты
         for (ServerGameObject obj : objects.values()) {
             obj.update();
         }
@@ -132,13 +145,11 @@ public class GameWorld {
                     int points = target.getCost();
 
                     if (server == null) {
-                        // Одиночная игра
                         currentScore += points;
                     } else {
-                        // Сетевая игра
-                        ServerPlayer player = players.get(bullet.getOwnerId());
-                        if (player != null) {
-                            player.addScore(points);
+                        ServerPlayer shooter = players.get(bullet.getOwnerId());
+                        if (shooter != null) {
+                            shooter.addScore(points);
                         }
                     }
                     break;
@@ -184,46 +195,15 @@ public class GameWorld {
         return winner;
     }
 
-    public void render(GraphicsContext gc) {
-        // Отрисовка игроков
-        for (ServerPlayer player : players.values()) {
-            if (!player.isDestroyed()) {
-                gc.setFill(getColorForId(player.getColorId()));
-                gc.fillRect(player.pos_x, player.pos_y, 30, 50);
-            }
-        }
-
-        // Отрисовка пуль
-        for (ServerBullet bullet : bullets.values()) {
-            gc.setFill(Color.YELLOW);
-            gc.fillRect(bullet.pos_x, bullet.pos_y, 10, 10);
-        }
-
-        // Отрисовка мишеней
-        for (ServerTarget target : targets.values()) {
-            gc.setFill(Color.RED);
-            gc.fillOval(target.pos_x, target.pos_y, 30, 30);
-        }
+    public Map<Integer, ServerBullet> getBullets() {
+        return bullets;
     }
 
-    private Color getColorForId(int colorId) {
-        return switch (colorId) {
-            case 0 -> Color.BLUE;
-            case 1 -> Color.RED;
-            case 2 -> Color.GREEN;
-            case 3 -> Color.ORANGE;
-            default -> Color.PURPLE;
-        };
+    public Map<Integer, ServerTarget> getTargets() {
+        return targets;
     }
 
-    public Map<Integer, ServerBullet> getBullets() { return bullets; }
-    public Map<Integer, ServerTarget> getTargets() { return targets; }
-    public Map<Integer, ServerPlayer> getPlayers() { return players; }
-
-    public DTOGameState serialize() {
-        // Сериализация состояния игры для отправки клиентам
-        return new DTOGameState(players.values().stream().toList(),
-                                         bullets.values().stream().toList(),
-                                         targets.values().stream().toList());
+    public Map<Integer, ServerPlayer> getPlayers() {
+        return players;
     }
 }

@@ -1,8 +1,10 @@
 package org.example.space_invaders_online.game.server;
 
 import com.google.gson.Gson;
-import org.example.space_invaders_online.game.gameWorld.GameWorld;
 import org.example.space_invaders_online.game.client.Request;
+import org.example.space_invaders_online.game.database.DatabaseManager;
+import org.example.space_invaders_online.game.database.PlayerStats;
+import org.example.space_invaders_online.game.gameWorld.GameWorld;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -31,7 +33,6 @@ public class Server {
     private volatile boolean gameRunning = false;
 
     private final Gson gson = new Gson();
-    private DTOGameState dtoGameState = new DTOGameState();
 
     public void start() {
         try {
@@ -100,7 +101,7 @@ public class Server {
                 break;
 
             case START:
-                handleReady(playerId, true);
+                handleReadyToggle(playerId);
                 break;
 
             case PAUSE:
@@ -173,11 +174,11 @@ public class Server {
         }
     }
 
-    private void handleReady(int playerId, boolean ready) {
-        readyStatus.put(playerId, ready);
+    private void handleReadyToggle(int playerId) {
+        boolean next = !Boolean.TRUE.equals(readyStatus.get(playerId));
+        readyStatus.put(playerId, next);
         broadcastPlayerList();
 
-        // Проверяем, все ли готовы
         if (state == ServerState.WAITING && allPlayersReady()) {
             startGame();
         }
@@ -187,36 +188,43 @@ public class Server {
         pauseRequest.put(playerId, requestingPause);
 
         if (requestingPause) {
-            // Проверяем, все ли запросили паузу
             if (allPlayersPaused()) {
                 pauseGame();
             }
         } else {
-            // Кто-то снял запрос паузы - возобновляем
-            if (state == ServerState.PAUSED) {
+            if (state == ServerState.PAUSED && !allPlayersPaused()) {
                 resumeGame();
             }
         }
     }
 
     private boolean allPlayersReady() {
-        if (clients.size() < 2) return false; // Минимум 2 игрока для начала
-        return readyStatus.values().stream().allMatch(ready -> ready);
+        if (gamePlayers.size() < 2) return false; // Минимум 2 игровых игрока для начала
+        for (Integer playerId : gamePlayers.keySet()) {
+            if (!Boolean.TRUE.equals(readyStatus.get(playerId))) {
+                return false;
+            }
+        }
+        return true;
     }
 
+    /** Пауза симуляции только если каждый подключённый клиент запросил паузу. */
     private boolean allPlayersPaused() {
-        return pauseRequest.values().stream().allMatch(paused -> paused);
+        if (gamePlayers.isEmpty()) {
+            return false;
+        }
+        for (Integer id : gamePlayers.keySet()) {
+            if (!Boolean.TRUE.equals(pauseRequest.get(id))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void startGame() {
         state = ServerState.RUNNING;
         gameWorld = new GameWorld(this);
-        gameWorld.init();
-
-        // Добавляем игроков в мир
-        for (ServerPlayer player : gamePlayers.values()) {
-            gameWorld.addExistingPlayer(player);
-        }
+        gameWorld.loadMatch(gamePlayers.values());
 
         gameRunning = true;
         gameThread = new Thread(this::gameLoop);
@@ -254,18 +262,17 @@ public class Server {
         }
     }
 
+    /**
+     * Пауза: игровой поток продолжает работать, но цикл {@link #gameLoop} не вызывает
+     * {@link GameWorld#update()} и не рассылает состояние, пока {@link #state} == PAUSED.
+     */
     private void pauseGame() {
-        // Приостанавливаем поток игры
-        if (gameThread != null) {
-            gameThread.suspend(); // Важно: используем suspend для соответствия требованию
-        }
+        state = ServerState.PAUSED;
         broadcastGamePaused();
     }
 
+    /** Снятие паузы: хотя бы один игрок не в режиме «пауза» — симуляция снова идёт. */
     private void resumeGame() {
-        if (gameThread != null) {
-            gameThread.resume(); // Возобновляем поток
-        }
         state = ServerState.RUNNING;
         broadcastGameResumed();
     }
@@ -328,7 +335,7 @@ public class Server {
         List<DTOPlayer> serializablePlayers = new ArrayList<>();
         for (ServerPlayer player : gameWorld.getPlayers().values()) {
             if (!player.isDestroyed()) {
-                serializablePlayers.add(player);
+                serializablePlayers.add(player.serialize());
             }
         }
 
@@ -342,7 +349,7 @@ public class Server {
         List<DTOTarget> serializableTargets = new ArrayList<>();
         for (ServerTarget target : gameWorld.getTargets().values()) {
             if (!target.isDestroyed()) {
-                serializableTargets.add(target.toSerializable());
+                serializableTargets.add(target.serialize());
             }
         }
 
@@ -371,7 +378,10 @@ public class Server {
         // Отправляем обновлённый список игроков
         ServerMessage message = new ServerMessage();
         message.type = ServerAnswerType.PLAYER_LIST_UPDATE;
-        message.players = new ArrayList<>(gamePlayers.values());
+        message.players = new ArrayList<>();
+        for (ServerPlayer p : gamePlayers.values()) {
+            message.players.add(p.serialize());
+        }
 
         String jsonMessage = gson.toJson(message);
 
@@ -429,31 +439,6 @@ public class Server {
         }
     }
 
-    private DTOGameState serializeGameState() {
-        List<DTOPlayer> serializedPlayers = new ArrayList<>();
-        for (ServerPlayer player : gamePlayers.values()) {
-            if (!player.isDestroyed()) {
-                serializedPlayers.add(player.serialize());
-            }
-        }
-
-        List<DTOBullet> serializedBullets = new ArrayList<>();
-        for (ServerBullet bullet : gameWorld.getBullets().values()) {
-            if (!bullet.isDestroyed()) {
-                serializedBullets.add(bullet.serialize());
-            }
-        }
-
-        List<DTOTarget> serializedTargets = new ArrayList<>();
-        for (ServerTarget target : gameWorld.getTargets().values()) {
-            if (!target.isDestroyed()) {
-                serializedTargets.add(target.serialize());
-            }
-        }
-
-        return new DTOGameState(serializedPlayers, serializedBullets, serializedTargets);
-    }
-
     private void sendLeaderboard(int playerId) {
         List<PlayerStats> leaderboard = DatabaseManager.getInstance().getLeaderboard();
 
@@ -481,6 +466,16 @@ public class Server {
         }
         readyStatus.remove(playerId);
         pauseRequest.remove(playerId);
+
+        // Пауза включалась только при «все на паузе». После выхода игрока оставшиеся всё ещё
+        // могут иметь pause=true — allPlayersPaused() остаётся true, и симуляция зависла бы.
+        // Ушедший не участвует в кворуме: снимаем паузу и обнуляем запросы у оставшихся.
+        if (state == ServerState.PAUSED && !gamePlayers.isEmpty()) {
+            for (Integer id : gamePlayers.keySet()) {
+                pauseRequest.put(id, false);
+            }
+            resumeGame();
+        }
 
         broadcastPlayerList();
         System.out.println("[SERVER] Player " + playerId + " disconnected");
