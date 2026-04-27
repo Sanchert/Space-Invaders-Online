@@ -50,9 +50,9 @@ public class ScreenManager {
             });
 
             Parent root = loader.load();
-            Rectangle2D vb = Screen.getPrimary().getVisualBounds();
-            double sceneW = Math.min(1920, vb.getWidth());
-            double sceneH = Math.min(1080, vb.getHeight());
+            Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+            double sceneW = Math.min(1920, visualBounds.getWidth());
+            double sceneH = Math.min(1080, visualBounds.getHeight());
             Scene scene = new Scene(root, sceneW, sceneH);
 
             stage.setScene(scene);
@@ -66,8 +66,8 @@ public class ScreenManager {
 
     private String getFxmlPath(ScreenType type) {
         return switch (type) {
-            case MAIN_MENU -> "/fxml/menu.fxml";
-            case GAME -> "/fxml/game.fxml";
+            case MAIN_MENU  -> "/fxml/menu.fxml";
+            case GAME       -> "/fxml/game.fxml";
         };
     }
 

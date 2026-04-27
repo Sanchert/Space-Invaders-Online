@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/25"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="org.example.space_invaders_online.game.client.LeaderboardPopupController"
+      spacing="10"
+      styleClass="leaderboard-popup-root"
+      stylesheets="@../css/leaderboard-popup.css">
+
+    <Label styleClass="leaderboard-popup-title" text="LEADERBOARD" />
+
+    <ScrollPane fitToWidth="true" styleClass="leaderboard-popup-scroll" VBox.vgrow="ALWAYS">
+        <GridPane fx:id="leaderboardGrid"
+                  hgap="20"
+                  styleClass="leaderboard-popup-grid"
+                  vgap="5" />
+    </ScrollPane>
+
+    <Button onAction="#onClose" styleClass="leaderboard-popup-close" text="Close" />
+</VBox>

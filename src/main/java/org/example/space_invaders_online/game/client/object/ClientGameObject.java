@@ -1,4 +1,6 @@
-package org.example.space_invaders_online.game.gameWorld;
+package org.example.space_invaders_online.game.client.object;
+
+import org.example.space_invaders_online.game.gameWorld.GameObject;
 
 public abstract class ClientGameObject extends GameObject {
 

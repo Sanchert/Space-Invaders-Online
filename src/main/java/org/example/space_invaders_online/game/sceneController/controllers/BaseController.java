@@ -13,13 +13,5 @@ public abstract class BaseController {
         this.gameContext = gameContext;
     }
 
-    // Общие методы для всех контроллеров
-    protected void showError(String message) {
-        // Показать уведомление об ошибке
-    }
-
-
-    public void onEnter(GameContext context) {
-    }
-
+    protected void showError(String message) {}
 }

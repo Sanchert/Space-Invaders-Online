@@ -19,19 +19,22 @@ public class MenuScreenController extends BaseController {
 
     @FXML private StackPane rootPane;
     @FXML private StackPane contentContainer;
-    @FXML private VBox splashContent;
-    @FXML private VBox mainMenuContent;
-    @FXML private VBox nameInputContent;
 
+    // ===== TITLE SCREEN =====
+    @FXML private VBox splashContent;
     @FXML private Label gameTitle;
     @FXML private Label pressAnyKeyLabel;
-    @FXML private TextField nameField;
-    @FXML private Label errorLabel;
 
+    // ===== MAIN MENU SCREEN =====
+    @FXML private VBox mainMenuContent;
     @FXML private Button singlePlayerBtn;
     @FXML private Button onlineGameBtn;
     @FXML private Button optionsBtn;
     @FXML private Button exitBtn;
+
+    // ===== NAME INPUT & LOBBY SCREEN ====
+    @FXML private VBox nameInputContent;
+    @FXML private TextField nameField;
     @FXML private Button confirmNameBtn;
     @FXML private Button backToMenuBtn;
 
@@ -41,6 +44,8 @@ public class MenuScreenController extends BaseController {
     @FXML private Button readyBtn;
     @FXML private Button lobbyLeaderboardBtn;
     @FXML private Button lobbyBackBtn;
+
+    @FXML private Label errorLabel;
 
     public MenuScreenController(ScreenManager screenManager, GameContext gameContext) {
         super(screenManager, gameContext);
@@ -155,13 +160,9 @@ public class MenuScreenController extends BaseController {
         showMainMenu();
     }
 
-    private void onSinglePlayer() {
-        gameContext.setGameMode(GameContext.GameMode.SINGLE);
-        showNameInput();
-    }
+    private void onSinglePlayer() {}
 
     private void onOnlineGame() {
-        gameContext.setGameMode(GameContext.GameMode.ONLINE);
         showNameInput();
     }
 
@@ -193,11 +194,6 @@ public class MenuScreenController extends BaseController {
         }
 
         gameContext.setPlayerName(name);
-
-        if (gameContext.getGameMode() == GameContext.GameMode.SINGLE) {
-            showError("Single player is not available yet");
-            return;
-        }
 
         OnlineMatchClient existing = gameContext.getOnlineMatchClient();
         if (existing != null && existing.isConnected()) {

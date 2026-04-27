@@ -17,12 +17,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NetworkClient {
     private Socket socket;
+    private volatile boolean connected;
+
     private PrintWriter out;
     private BufferedReader in;
-    private INetworkListener listener;
     private final Gson gson = new Gson();
-    private volatile boolean connected;
-    private Thread readerThread;
+
+    private INetworkListener listener;
+
     private final AtomicBoolean suppressDisconnectCallback = new AtomicBoolean(false);
 
     public void connect(String host, int port) throws IOException {
@@ -34,7 +36,7 @@ public class NetworkClient {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         connected = true;
 
-        readerThread = new Thread(this::readLoop, "network-client-reader");
+        Thread readerThread = new Thread(this::readLoop, "network-client-reader");
         readerThread.setDaemon(true);
         readerThread.start();
     }
@@ -108,22 +110,18 @@ public class NetworkClient {
     }
 
     private void dispatch(ServerMessage message) {
-        INetworkListener l = listener;
-        if (l == null) {
-            return;
-        }
         Platform.runLater(() -> {
             switch (message.type) {
-                case INIT -> l.onInit(message.playerId);
-                case UPDATE -> l.onGameState(message.currentGameState);
-                case NAME_ACCEPTED -> l.onNameAccepted();
-                case NAME_REJECTED -> l.onNameRejected(message.args != null ? message.args : "");
-                case PLAYER_LIST_UPDATE -> l.onPlayerListUpdate(message.players);
-                case GAME_START -> l.onGameStart();
-                case GAME_PAUSED -> l.onGamePaused();
-                case GAME_RESUMED -> l.onGameResumed();
-                case WIN -> l.onWin(message.args != null ? message.args : "");
-                case LEADERBOARD -> l.onLeaderBoard(message.leaderboard);
+                case INIT               -> listener.onInit(message);
+                case UPDATE             -> listener.onGameState(message);
+                case NAME_ACCEPTED      -> listener.onNameAccepted();
+                case NAME_REJECTED      -> listener.onNameRejected();
+                case PLAYER_LIST_UPDATE -> listener.onPlayerListUpdate(message);
+                case GAME_START         -> listener.onGameStart();
+                case GAME_PAUSED        -> listener.onGamePaused();
+                case GAME_RESUMED       -> listener.onGameResumed();
+                case WIN                -> listener.onWin(message);
+//                case LEADERBOARD -> l.onLeaderBoard(message.leaderboard);
                 default -> { }
             }
         });

@@ -23,4 +23,10 @@ module org.example.space_invaders_online {
     opens org.example.space_invaders_online.game.client to javafx.fxml;
     exports org.example.space_invaders_online.game.sceneController.controllers;
     opens org.example.space_invaders_online.game.sceneController.controllers to javafx.fxml;
+    exports org.example.space_invaders_online.game.client.handler;
+    opens org.example.space_invaders_online.game.client.handler to javafx.fxml;
+    exports org.example.space_invaders_online.game.client.object;
+    opens org.example.space_invaders_online.game.client.object to javafx.fxml;
+    exports org.example.space_invaders_online.game.sceneController;
+    opens org.example.space_invaders_online.game.sceneController to javafx.fxml;
 }

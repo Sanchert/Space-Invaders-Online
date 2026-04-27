@@ -1,0 +1,57 @@
+/* ========== LEADERBOARD POPUP ========== */
+
+.leaderboard-popup-root {
+    -fx-padding: 20;
+    -fx-background-color: #1a1a2e;
+}
+
+.leaderboard-popup-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: gold;
+}
+
+.leaderboard-popup-grid {
+    -fx-padding: 10;
+}
+
+.leaderboard-popup-header {
+    -fx-text-fill: #4CAF50;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.leaderboard-popup-rank {
+    -fx-text-fill: #ccc;
+}
+
+.leaderboard-popup-name {
+    -fx-text-fill: #fff;
+}
+
+.leaderboard-popup-wins {
+    -fx-text-fill: gold;
+    -fx-font-weight: bold;
+}
+
+.leaderboard-popup-muted {
+    -fx-text-fill: #ccc;
+}
+
+.leaderboard-popup-accuracy {
+    -fx-text-fill: #4CAF50;
+}
+
+.leaderboard-popup-scroll {
+    -fx-background-color: transparent;
+}
+
+.leaderboard-popup-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.leaderboard-popup-close {
+    -fx-background-color: #f44336;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+}

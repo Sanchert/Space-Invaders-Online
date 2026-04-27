@@ -1,7 +1,6 @@
-package org.example.space_invaders_online.game.client;
+package org.example.space_invaders_online.game.client.object;
 
 import javafx.scene.paint.Color;
-import org.example.space_invaders_online.game.gameWorld.ClientGameObject;
 
 public class ClientPlayer extends ClientGameObject {
 
