@@ -96,14 +96,14 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     private void showSplash() {
         gameTitle.setVisible(true);
-
+        gameTitle.setManaged(true);
         splashContent.setVisible(true);
         splashContent.setManaged(true);
     }
 
     private void showMainMenu() {
         gameTitle.setVisible(true);
-
+        gameTitle.setManaged(true);
         mainMenuContent.setVisible(true);
         mainMenuContent.setManaged(true);
 
@@ -119,7 +119,7 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     private void showNameInput() {
         gameTitle.setVisible(false);
-
+        gameTitle.setManaged(false);
         splashContent.setVisible(false);
         splashContent.setManaged(false);
 

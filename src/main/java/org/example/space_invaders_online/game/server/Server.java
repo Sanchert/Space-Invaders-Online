@@ -14,8 +14,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.lang.Thread.sleep;
-
 public class Server {
     private static final int PORT = 12345;
     private static final int MAX_PLAYERS = 4;
@@ -218,7 +216,7 @@ public class Server {
             }
 
             try {
-                sleep(1);
+                Thread.sleep(1);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -460,7 +458,7 @@ public class Server {
             DatabaseManager.getInstance().recordShot(p.getName());
     }
 
-    public static void main(String[] args) {
+    static void main() {
         Server server = new Server();
         server.start();
 

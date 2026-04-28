@@ -1,7 +1,6 @@
 package org.example.space_invaders_online.game.sceneController.controllers;
 
 import javafx.animation.AnimationTimer;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -27,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class GameScreenController extends BaseController implements INetworkListener {
 
-    @FXML private static Canvas gameCanvas;
+    @FXML private Canvas gameCanvas;
     @FXML private VBox listRows;
     @FXML private Label winOverlayLabel;
     @FXML private VBox pauseOverlay;
@@ -236,20 +235,22 @@ public class GameScreenController extends BaseController implements INetworkList
     }
 
     // === Rendering ==================================
-    private final static double w = gameCanvas.getWidth();
-    private final static double h = gameCanvas.getHeight();
-    private final static double scale = Math.min(w / LOGICAL_W, h / LOGICAL_H);
-    private final static double ox = (w - LOGICAL_W * scale) / 2;
-    private final static double oy = (h - LOGICAL_H * scale) / 2;
 
     private void renderFrame() {
         if (gc == null) {
             return;
         }
 
+        double w = gameCanvas.getWidth();
+        double h = gameCanvas.getHeight();
+
         if (w <= 0 || h <= 0) {
             return;
         }
+
+        double scale = Math.min(w / LOGICAL_W, h / LOGICAL_H);
+        double ox = (w - LOGICAL_W * scale) / 2;
+        double oy = (h - LOGICAL_H * scale) / 2;
 
         gc.setFill(javafx.scene.paint.Color.BLACK);
         gc.fillRect(0, 0, w, h);
