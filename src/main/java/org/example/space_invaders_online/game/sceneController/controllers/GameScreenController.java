@@ -189,7 +189,6 @@ public class GameScreenController extends BaseController implements INetworkList
     private void updateGameState(DTOGameState state) {
         if (state == null) return;
 
-        // Remove objects absent from the new state
         if (state.players != null) {
             Set<Integer> ids = state.players.stream()
                     .map(p -> p.objectID).collect(toSet());
@@ -307,6 +306,8 @@ public class GameScreenController extends BaseController implements INetworkList
     private void onExitToMenu() {
         sendAction(RequestType.DISCONNECT);
         renderLoop.stop();
+        networkClient.disconnect(false);  // just close — server detects it via IOException
+        gameContext.setNetworkClient(null);
         networkClient.setListener(null);
         hudPanels.clear();
         players.clear();

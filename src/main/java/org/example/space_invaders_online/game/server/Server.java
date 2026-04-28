@@ -282,17 +282,14 @@ public class Server {
 
     private void resetForNextGame() {
         state = ServerState.WAITING;
+        gameWorld = null;
 
-        // Сбрасываем статусы готовности
-        for (Integer playerId : readyStatus.keySet()) {
-            readyStatus.put(playerId, false);
-            pauseRequest.put(playerId, false);
-        }
+        gamePlayers.clear();
+        usedNames.clear();
 
-        // Сбрасываем счёт игроков
-        for (ServerPlayer player : gamePlayers.values()) {
-            player.resetScore();
-            player.resetShoots();
+        for (Integer id : clients.keySet()) {
+            readyStatus.put(id, false);
+            pauseRequest.put(id, false);
         }
 
         broadcastPlayerList();

@@ -217,11 +217,7 @@ public class MenuScreenController extends BaseController implements INetworkList
     @Override
     public void onInit(ServerMessage m) {
         gameContext.setMyPlayerId(m.playerId);
-        String pendingName = gameContext.getPlayerName();
-        if (pendingName != null && !pendingName.isEmpty()) {
-            networkClient.send(new Request(RequestType.SET_NAME, pendingName,
-                    gameContext.getMyPlayerId()));
-        }
+        networkClient.send(new Request(RequestType.SET_NAME, gameContext.getPlayerName(), gameContext.getMyPlayerId()));
     }
 
     @Override
