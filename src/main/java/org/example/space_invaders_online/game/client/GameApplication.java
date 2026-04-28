@@ -13,7 +13,6 @@ import org.example.space_invaders_online.game.sceneController.ScreenType;
 import java.io.IOException;
 
 public class GameApplication extends Application {
-    private ScreenManager screenManager;
 
     @Override
     public void start(Stage stage) {
@@ -22,7 +21,7 @@ public class GameApplication extends Application {
         GameContext ctx = new GameContext();
         ctx.setNetworkClient(new NetworkClient());
 
-        screenManager = new ScreenManager(stage, ctx);
+        ScreenManager screenManager = new ScreenManager(stage, ctx);
         screenManager.switchScreen(ScreenType.MAIN_MENU);
     }
 

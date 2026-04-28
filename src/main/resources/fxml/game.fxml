@@ -38,9 +38,9 @@
         </Label>
         <!-- PAUSE OVERLAY -->
         <VBox fx:id="pauseOverlay" styleClass="pause-overlay" visible="false" managed="false">
-            <Label text="PAUSED" styleClass="pause-title"/>
-            <Label text="Press ESC to resume" styleClass="pause-hint"/>
-            <Button fx:id="exitToMenuBtn" text="EXIT TO MENU" styleClass="exit-menu-button"/>
+            <Label fx:id="pauseTitleLabel" text="PAUSED" styleClass="pause-title"/>
+            <Label fx:id="pauseHintLabel"  text="Press ESC to resume" styleClass="pause-hint"/>
+            <Button fx:id="exitToMenuBtn"   text="EXIT TO MENU" styleClass="exit-menu-button"/>
         </VBox>
     </StackPane>
 

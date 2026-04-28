@@ -50,7 +50,7 @@ public class Server {
     private void acceptClients() {
         while (true) {
             try {
-                // FIXME: reject accept new players
+
                 if (clients.size() >= MAX_PLAYERS && state != ServerState.RUNNING) {
                     Thread.sleep(1000);
                     continue;
@@ -232,12 +232,12 @@ public class Server {
                 if (state == ServerState.RUNNING) {
                     gameWorld.update();
                     checkWinCondition();
-                    broadcastGameState(); // once per tick = 60/s
+                    broadcastGameState();
                 }
             }
 
             try {
-                Thread.sleep(1); // yield, not 10ms — avoids missing ticks
+                Thread.sleep(1);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -269,10 +269,19 @@ public class Server {
     private void endGame(String winnerName) {
         gameRunning = false;
 
-        // Записываем победу в БД
-        DatabaseManager.getInstance().recordWin(winnerName);
+        DatabaseManager db = DatabaseManager.getInstance();
+        gamePlayers.values().forEach(sp -> {
+            String name = sp.getName();
+            if (name == null || name.isEmpty()) {
+                return;
+            }
+            PlayerStats stats = db.getOrCreatePlayer(name);
+            if (name.equals(winnerName)) {
+                stats.addWin();
+            }
+            db.updatePlayerStats(stats);
+        });
 
-        // Сообщаем всем о победителе
         ServerMessage message = new ServerMessage();
         message.type = ServerAnswerType.WIN;
         message.args = winnerName;
@@ -286,7 +295,6 @@ public class Server {
             }
         }
 
-        // Сбрасываем состояние для следующей игры
         resetForNextGame();
     }
 
@@ -311,7 +319,6 @@ public class Server {
     private void broadcastGameState() {
         if (gameWorld == null) return;
 
-        // Конвертируем в сериализуемые объекты
         List<DTOPlayer> serializablePlayers = new ArrayList<>();
         for (ServerPlayer player : gameWorld.getPlayers().values()) {
             if (!player.isDestroyed()) {

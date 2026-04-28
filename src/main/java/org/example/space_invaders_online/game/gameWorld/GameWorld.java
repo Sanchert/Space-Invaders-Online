@@ -24,8 +24,8 @@ public class GameWorld {
 
     private int currentScore = 0;
     private static final int WIN_SCORE = 6;
-    private static final int NEAR_TARGET_POINTS = 1;
-    private static final int FAR_TARGET_POINTS = 2;
+    private static final int NEAR_TARGET_POINTS = 6;
+    private static final int FAR_TARGET_POINTS = 6;
 
     public GameWorld(Server server) {
         this.server = server;

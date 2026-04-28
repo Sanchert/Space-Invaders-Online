@@ -8,7 +8,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import org.example.space_invaders_online.game.client.*;
-import org.example.space_invaders_online.game.database.PlayerStats;
 import org.example.space_invaders_online.game.sceneController.GameContext;
 import org.example.space_invaders_online.game.sceneController.ScreenManager;
 import org.example.space_invaders_online.game.sceneController.ScreenType;
@@ -46,6 +45,8 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     private NetworkClient networkClient;
     private boolean isReady = false;
+
+
     private final Map<Integer, PlayerInfoPanel> lobbyPanels = new HashMap<>();
     public MenuScreenController(ScreenManager screenManager, GameContext gameContext) {
         super(screenManager, gameContext);
@@ -72,6 +73,12 @@ public class MenuScreenController extends BaseController implements INetworkList
 
         networkClient = gameContext.getNetworkClient();
         networkClient.setListener(this);
+        System.out.println("menu");
+        try {
+            networkClient.connect("localhost", 12345);
+        } catch (Exception e) {
+            showError("Cannot connect to server: " + e.getMessage());
+        }
     }
 
     private void onLeaderboard() {
@@ -150,7 +157,7 @@ public class MenuScreenController extends BaseController implements INetworkList
         networkClient = null;
         gameContext.setMyPlayerId(-1);
 
-        lobbyPanels.clear();                    // ← add this
+        lobbyPanels.clear();
         playersList.getChildren().clear();
         showMainMenu();
     }
@@ -170,16 +177,13 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     private void onConfirmName() {
         String name = nameField.getText().trim();
-        if (name.length() < 2) {
-            showError("Name must be at least 2 characters");
-            return;
-        }
+        if (name.length() < 3) { showError("Name must be at least 2 characters"); return; }
         gameContext.setPlayerName(name);
-
-        try {
-            networkClient.connect("localhost", 12345);
-        } catch (Exception e) {
-            showError("Cannot connect to server: " + e.getMessage());
+        System.out.println("confirm");
+        // We are already connected and have a playerId → send name immediately
+        if (networkClient.isConnected() && gameContext.getMyPlayerId() != -1) {
+            networkClient.send(new Request(RequestType.SET_NAME, name,
+                    gameContext.getMyPlayerId()));
         }
     }
 
@@ -211,7 +215,11 @@ public class MenuScreenController extends BaseController implements INetworkList
     @Override
     public void onInit(ServerMessage m) {
         gameContext.setMyPlayerId(m.playerId);
-        networkClient.send(new Request(RequestType.SET_NAME, gameContext.getPlayerName(), gameContext.getMyPlayerId()));
+        String pendingName = gameContext.getPlayerName();
+        if (pendingName != null && !pendingName.isEmpty()) {
+            networkClient.send(new Request(RequestType.SET_NAME, pendingName,
+                    gameContext.getMyPlayerId()));
+        }
     }
 
     @Override
@@ -234,12 +242,10 @@ public class MenuScreenController extends BaseController implements INetworkList
     }
 
     private void syncPlayerPanels(List<DTOPlayer> players) {
-        // Mark all existing panels as disconnected first
         for (PlayerInfoPanel panel : lobbyPanels.values()) {
             panel.setDisconnected(true);
         }
 
-        // Add or update panels for each player in the list
         Set<Integer> activeIds = new HashSet<>();
         for (DTOPlayer dto : players) {
             activeIds.add(dto.objectID);
@@ -263,7 +269,6 @@ public class MenuScreenController extends BaseController implements INetworkList
             panel.setCurrentPlayer(dto.objectID == gameContext.getMyPlayerId());
         }
 
-        // Remove panels for players who left
         lobbyPanels.entrySet().removeIf(entry -> {
             if (!activeIds.contains(entry.getKey())) {
                 playersList.getChildren().remove(entry.getValue());

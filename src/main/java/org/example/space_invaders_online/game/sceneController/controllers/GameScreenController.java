@@ -35,7 +35,8 @@ public class GameScreenController extends BaseController implements INetworkList
     @FXML private Button pauseButton;
     @FXML private Button resumeButton;
     @FXML private Button exitToMenuBtn;
-
+    @FXML private Label pauseTitleLabel;
+    @FXML private Label pauseHintLabel;
     // Constants matching OnlineMatchClient (move to a shared Constants class later)
     private static final double LOGICAL_W = 900;
     private static final double LOGICAL_H = 320;
@@ -161,9 +162,12 @@ public class GameScreenController extends BaseController implements INetworkList
 
     @Override
     public void onWin(ServerMessage m) {
-        winOverlayLabel.setText("WINNER: " + m.args);
-        winOverlayLabel.setVisible(true);
-        winOverlayLabel.setManaged(true);
+        pauseTitleLabel.setText("WINNER: " + m.args);
+        pauseHintLabel.setVisible(false);
+        pauseHintLabel.setManaged(false);
+
+        pauseOverlay.setVisible(true);
+        pauseOverlay.setManaged(true);
     }
 
     @Override
@@ -275,9 +279,7 @@ public class GameScreenController extends BaseController implements INetworkList
     private void onExitToMenu() {
         renderLoop.stop();
         sendAction(RequestType.DISCONNECT);
-        networkClient.disconnect(false);
         networkClient.setListener(null);
-        gameContext.setNetworkClient(null);
         hudPanels.clear();
         players.clear(); bullets.clear(); targets.clear();
         screenManager.switchScreen(ScreenType.MAIN_MENU, gameContext);
