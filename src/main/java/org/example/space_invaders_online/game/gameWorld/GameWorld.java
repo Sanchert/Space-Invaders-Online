@@ -118,7 +118,6 @@ public class GameWorld {
 
         checkCollisions();
         clearDestroyedObjects();
-        checkWinCondition();
     }
 
     private void checkCollisions() {
@@ -166,18 +165,14 @@ public class GameWorld {
         targets.values().removeIf(ServerTarget::isDestroyed);
     }
 
-    private void checkWinCondition() {
-        for (ServerPlayer player : players.values()) {
-            if (player.getScore() >= WIN_SCORE) {
-                winner = player.getName();
-                if (server != null) server.endGame(winner);  // single call
-                return;
-            }
-        }
-    }
+
+
 
     public String hasWinner() {
-        return winner;
+        for (ServerPlayer player : players.values()) {
+            if (player.getScore() >= WIN_SCORE) return player.getName();
+        }
+        return null;
     }
 
     public Map<Integer, ServerBullet> getBullets() {

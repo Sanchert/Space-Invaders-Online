@@ -23,6 +23,8 @@ import org.example.space_invaders_online.game.server.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.stream.Collectors.toSet;
+
 
 public class GameScreenController extends BaseController implements INetworkListener {
 
@@ -185,27 +187,42 @@ public class GameScreenController extends BaseController implements INetworkList
 
     // == Game state update ============================================
     private void updateGameState(DTOGameState state) {
-        players.keySet().removeIf(id -> players.get(id).isDestroyed());
-        bullets.keySet().removeIf(id -> bullets.get(id).isDestroyed());
-        targets.keySet().removeIf(id -> targets.get(id).isDestroyed());
+        if (state == null) return;
 
+        // Remove objects absent from the new state
+        if (state.players != null) {
+            Set<Integer> ids = state.players.stream()
+                    .map(p -> p.objectID).collect(toSet());
+            players.keySet().removeIf(id -> !ids.contains(id));
+        }
+        if (state.bullets != null) {
+            Set<Integer> ids = state.bullets.stream()
+                    .map(b -> b.objectID).collect(toSet());
+            bullets.keySet().removeIf(id -> !ids.contains(id));
+        }
+        if (state.targets != null) {
+            Set<Integer> ids = state.targets.stream()
+                    .map(t -> t.objectID).collect(toSet());
+            targets.keySet().removeIf(id -> !ids.contains(id));
+        }
+
+        // Add or update
         if (state.players != null)
-            for (DTOPlayer dto : state.players) {
+            for (DTOPlayer dto : state.players)
                 players.computeIfAbsent(dto.objectID, id -> new ClientPlayer(id, getColor(dto.colorID)))
                         .updateFromServer(dto.pos_x, dto.pos_y, dto.shoots, dto.name);
-        }
+
         if (state.bullets != null)
-            for (DTOBullet dto : state.bullets) {
+            for (DTOBullet dto : state.bullets)
                 bullets.computeIfAbsent(dto.objectID, id -> new ClientBullet(id, dto.pos_x, dto.pos_y))
                         .updateFromServer(dto.pos_x, dto.pos_y);
-        }
+
         if (state.targets != null)
-            for (DTOTarget dto : state.targets) {
+            for (DTOTarget dto : state.targets)
                 targets.computeIfAbsent(dto.objectID, id -> new ClientTarget(id, dto.pos_x, dto.pos_y))
                         .updateFromServer(dto.pos_x, dto.pos_y);
-        }
 
-        if (state.players != null) {
+        if(state.players != null) {
             syncHudPanels(state.players);
         }
     }

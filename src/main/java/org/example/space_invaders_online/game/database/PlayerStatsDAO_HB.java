@@ -15,22 +15,23 @@ public class PlayerStatsDAO_HB implements PlayerStatsDAO {
             session = HibernateUtil.getSessionFactory().getCurrentSession();
             tx = session.beginTransaction();
 
-            Query<PlayerStats> q = session.createQuery(
-                    "FROM PlayerStats WHERE playerName = :name", PlayerStats.class);
-            q.setParameter("name", playerName);
-            PlayerStats stats = q.uniqueResult();
+            session.createNativeMutationQuery(
+                            "INSERT INTO player_stats (playerName, totalhits, totalshots, wins) " +
+                                    "VALUES (:name, 0, 0, 0) ON CONFLICT (playerName) DO NOTHING")
+                    .setParameter("name", playerName)
+                    .executeUpdate();
 
-            if (stats == null) {
-                stats = new PlayerStats(playerName);
-                session.persist(stats);
-            }
+            PlayerStats stats = session.createQuery(
+                            "FROM PlayerStats WHERE playerName = :name", PlayerStats.class)
+                    .setParameter("name", playerName)
+                    .uniqueResult();
 
             tx.commit();
             return stats;
         } catch (Exception e) {
             if (tx != null) tx.rollback();
             e.printStackTrace();
-            return new PlayerStats(playerName); // safe fallback
+            return new PlayerStats(playerName);
         }
     }
 

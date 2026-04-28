@@ -46,4 +46,8 @@ public class DatabaseManager {
     public void shutdown() {
         HibernateUtil.shutdown();
     }
+
+    public void getOrCreate(String playerName) {
+        dao.getOrCreate(playerName);
+    }
 }

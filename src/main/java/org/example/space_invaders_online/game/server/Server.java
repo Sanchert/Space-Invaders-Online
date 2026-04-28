@@ -210,7 +210,13 @@ public class Server {
             for (int i = 0; i < ticks && gameRunning; i++) {
                 if (state == ServerState.RUNNING) {
                     gameWorld.update();
-                    checkWinCondition();
+
+                    String winner = gameWorld.hasWinner();
+                    if (winner != null) {
+                        endGame(winner);
+                        return;
+                    }
+
                     broadcastGameState();
                 }
             }
@@ -226,7 +232,6 @@ public class Server {
 
     private void pauseGame() {
         state = ServerState.PAUSED;
-        gameLoop();
         ServerTime.setPaused(true);
         broadcastGamePaused();
     }
@@ -253,6 +258,7 @@ public class Server {
         gamePlayers.values().forEach(sp -> {
             String name = sp.getName();
             if (name == null || name.isEmpty()) return;
+            db.getOrCreate(name);
             if (name.equals(winnerName)) {
                 db.recordWin(name);
             }

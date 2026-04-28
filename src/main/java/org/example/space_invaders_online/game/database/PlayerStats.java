@@ -14,11 +14,11 @@ public class PlayerStats {
     @Column(nullable = false)
     private int wins = 0;
 
-    @Column(nullable = false)
-    private int totalShots = 0;
-
-    @Column(nullable = false)
+    @Column(name = "totalhits", nullable = false, columnDefinition = "integer default 0")
     private int totalHits = 0;
+
+    @Column(name = "totalshots", nullable = false, columnDefinition = "integer default 0")
+    private int totalShots = 0;
 
     public PlayerStats() {}
 
