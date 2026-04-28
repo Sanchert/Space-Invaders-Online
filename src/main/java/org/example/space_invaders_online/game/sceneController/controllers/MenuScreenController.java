@@ -66,20 +66,17 @@ public class MenuScreenController extends BaseController implements INetworkList
         leaderboardBtn  .setOnAction(e -> onLeaderboard());
         Platform.runLater(() -> {
             if (screenManager.getStage().getScene() != null) {
-                screenManager.getStage().getScene().addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
+                screenManager.getStage().getScene()
+                        .addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
             }
         });
 
-        showSplash();
-
         networkClient = gameContext.getNetworkClient();
-        networkClient.setListener(this);
-
-        try {
-            networkClient.connect("localhost", 12345);
-        } catch (Exception e) {
-            showError("Cannot connect to server: " + e.getMessage());
+        if (networkClient != null) {
+            networkClient.setListener(this);
         }
+
+        showSplash();
     }
 
     private void onLeaderboard() {
@@ -166,6 +163,10 @@ public class MenuScreenController extends BaseController implements INetworkList
     private void onSinglePlayer() {}
 
     private void onOnlineGame() {
+        NetworkClient nc = new NetworkClient();
+        nc.setListener(this);
+        gameContext.setNetworkClient(nc);
+        networkClient = nc;
         showNameInput();
     }
 
@@ -178,14 +179,16 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     private void onConfirmName() {
         String name = nameField.getText().trim();
-        if (name.length() < 2) {
+        if (name.isEmpty() || name.length() < 2) {
             showError("Name must be at least 2 characters");
             return;
         }
         gameContext.setPlayerName(name);
-        if (networkClient.isConnected() && gameContext.getMyPlayerId() != -1) {
-            networkClient.send(new Request(RequestType.SET_NAME, name,
-                    gameContext.getMyPlayerId()));
+
+        try {
+            networkClient.connect("localhost", 12345);
+        } catch (Exception e) {
+            showError("Cannot connect to server: " + e.getMessage());
         }
     }
 
@@ -216,8 +219,9 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     @Override
     public void onInit(ServerMessage m) {
-        gameContext.setMyPlayerId(m.playerId);
-        networkClient.send(new Request(RequestType.SET_NAME, gameContext.getPlayerName(), gameContext.getMyPlayerId()));
+        int id = m.playerId;
+        gameContext.setMyPlayerId(id);
+        networkClient.send(new Request(RequestType.SET_NAME, gameContext.getPlayerName(), id));
     }
 
     @Override
