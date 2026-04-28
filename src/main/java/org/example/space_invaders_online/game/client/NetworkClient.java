@@ -136,7 +136,6 @@ public class NetworkClient {
                 case GAME_PAUSED        -> listener.onGamePaused();
                 case GAME_RESUMED       -> listener.onGameResumed();
                 case WIN                -> listener.onWin(message);
-//                case LEADERBOARD -> l.onLeaderBoard(message.leaderboard);
                 default -> { }
             }
         });

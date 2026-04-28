@@ -1,8 +1,6 @@
 package org.example.space_invaders_online.game.client;
 
 import org.example.space_invaders_online.game.database.PlayerStats;
-import org.example.space_invaders_online.game.server.DTOGameState;
-import org.example.space_invaders_online.game.server.DTOPlayer;
 import org.example.space_invaders_online.game.server.ServerMessage;
 
 import java.util.List;

@@ -9,7 +9,8 @@ module org.example.space_invaders_online {
     requires org.hibernate.orm.core;
 //    requires org.example.space_invaders_online;
     requires java.naming;
-    opens org.example.space_invaders_online.game.database to com.google.gson, org.hibernate.orm.core;
+    exports org.example.space_invaders_online.game.database;
+    opens org.example.space_invaders_online.game.database to com.google.gson, org.hibernate.orm.core, javafx.fxml;
     requires org.postgresql.jdbc;
     opens org.example.space_invaders_online to javafx.fxml;
     exports org.example.space_invaders_online;
@@ -23,8 +24,6 @@ module org.example.space_invaders_online {
     opens org.example.space_invaders_online.game.client to javafx.fxml;
     exports org.example.space_invaders_online.game.sceneController.controllers;
     opens org.example.space_invaders_online.game.sceneController.controllers to javafx.fxml;
-    exports org.example.space_invaders_online.game.client.handler;
-    opens org.example.space_invaders_online.game.client.handler to javafx.fxml;
     exports org.example.space_invaders_online.game.client.object;
     opens org.example.space_invaders_online.game.client.object to javafx.fxml;
     exports org.example.space_invaders_online.game.sceneController;

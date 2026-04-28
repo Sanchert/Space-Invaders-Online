@@ -5,7 +5,7 @@ import org.example.space_invaders_online.game.client.NetworkClient;
 public class GameContext {
     private String playerName;
     private NetworkClient networkClient;
-
+    private int myPlayerId = -1;
     // getters / setters
     public String getPlayerName() { return playerName; }
     public void setPlayerName(String playerName) { this.playerName = playerName; }
@@ -15,5 +15,12 @@ public class GameContext {
     }
     public void setNetworkClient(NetworkClient networkClient) {
         this.networkClient = networkClient;
+    }
+
+    public int getMyPlayerId() {
+        return myPlayerId;
+    }
+    public void setMyPlayerId(int myPlayerId) {
+        this.myPlayerId = myPlayerId;
     }
 }
