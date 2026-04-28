@@ -90,8 +90,8 @@ public class GameScreenController extends BaseController implements INetworkList
         pauseOverlay.setVisible(false);
         pauseOverlay.setManaged(false);
 
-        pauseButton .setOnAction(e -> sendAction(RequestType.PAUSE));
-        resumeButton.setOnAction(e -> sendAction(RequestType.RESUME));
+        pauseButton .setOnAction(e  -> sendAction(RequestType.PAUSE));
+        resumeButton.setOnAction(e  -> sendAction(RequestType.RESUME));
         exitToMenuBtn.setOnAction(e -> onExitToMenu());
 
         startRenderLoop();
@@ -131,7 +131,7 @@ public class GameScreenController extends BaseController implements INetworkList
         if (r != null && networkClient.isConnected()) networkClient.send(r);
     }
 
-    // ── INetworkListener ────────────────────────────────────────────────
+    // == INetworkListener =================================================
 
     @Override public void onInit(ServerMessage m) {}  // won't fire here
     @Override public void onNameAccepted() {}
@@ -179,7 +179,7 @@ public class GameScreenController extends BaseController implements INetworkList
         screenManager.switchScreen(ScreenType.MAIN_MENU, gameContext);
     }
 
-    // ── Game state update ────────────────────────────────────────────────
+    // == Game state update ============================================
 
     private void updateGameState(DTOGameState state) {
         // Cleanup objects no longer present
@@ -231,7 +231,7 @@ public class GameScreenController extends BaseController implements INetworkList
         });
     }
 
-    // ── Rendering ────────────────────────────────────────────────────────
+    // === Rendering ==================================
 
     private void renderFrame() {
         if (gc == null) return;

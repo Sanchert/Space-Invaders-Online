@@ -4,8 +4,7 @@ import org.example.space_invaders_online.game.gameWorld.ServerGameObject;
 
 public class ServerBullet extends ServerGameObject {
     private final int ownerId;
-    private double speed = 3.5;
-    // NOTE: if you need to turn the player - it's need moveDirection
+    private double speed = 6.5;
 
     public ServerBullet(int id, int ownerId, double pos_x, double pos_y) {
         super(id, pos_x, pos_y);
