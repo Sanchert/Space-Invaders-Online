@@ -4,6 +4,7 @@ import javafx.fxml.FXML;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -17,15 +18,16 @@ import org.example.space_invaders_online.game.sceneController.ScreenType;
  */
 public class GameScreenController extends BaseController {
 
-    @FXML private HBox gameRootHBox;
-    @FXML private StackPane gameStack;
-    @FXML private Canvas gameCanvas;
-    @FXML private Label winOverlayLabel;
-    @FXML private Button resumeButton;
-    @FXML private Button pauseButton;
-    @FXML private Button exitToMenuBtn;
-    @FXML private VBox pauseOverlay;
-    @FXML private VBox gameHudRows;
+    @FXML private Button resumeButton; //TODO
+    @FXML private Button pauseButton; // TODO
+    @FXML private Button exitToMenuBtn; // TODO
+
+    @FXML private Canvas gameCanvas; // TODO
+    @FXML private ScrollPane playersList; // TODO
+    @FXML private VBox   listRows; // ?
+
+    @FXML private Label  winOverlayLabel; // TODO
+    @FXML private VBox   pauseOverlay; //  TODO
 
     public GameScreenController(ScreenManager screenManager, GameContext gameContext) {
         super(screenManager, gameContext);
@@ -33,11 +35,11 @@ public class GameScreenController extends BaseController {
 
     @FXML
     public void initialize() {
-        OnlineMatchClient match = gameContext.getOnlineMatchClient();
-        if (match == null) {
+//        OnlineMatchClient match = gameContext.getOnlineMatchClient();
+//        if (match == null) {
             screenManager.switchScreen(ScreenType.MAIN_MENU, gameContext);
-            return;
-        }
+//            return;
+//        }
 
         if (winOverlayLabel != null) {
             winOverlayLabel.setVisible(false);
@@ -48,12 +50,12 @@ public class GameScreenController extends BaseController {
             pauseOverlay.setManaged(false);
         }
 
-        match.bindGame(gameCanvas, gameStack, winOverlayLabel, pauseOverlay, gameHudRows);
-        match.bindPauseResumeButtons(pauseButton, resumeButton);
+//        match.bindGame(gameCanvas, gameStack, winOverlayLabel, pauseOverlay, gameHudRows);
+//        match.bindPauseResumeButtons(pauseButton, resumeButton);
 
         if (exitToMenuBtn != null) {
             exitToMenuBtn.setOnAction(e -> {
-                match.shutdownForMenuBack();
+//                match.shutdownForMenuBack();
                 gameContext.setOnlineMatchClient(null);
                 screenManager.switchScreen(ScreenType.MAIN_MENU, gameContext);
             });

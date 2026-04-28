@@ -13,11 +13,11 @@ import java.io.IOException;
 public class ScreenManager {
 
     private final Stage stage;
-    private GameContext gameContext;
+    private final GameContext gameContext;
 
-    public ScreenManager(Stage stage) {
+    public ScreenManager(Stage stage, GameContext gctx) {
         this.stage = stage;
-        this.gameContext = new GameContext();
+        this.gameContext = gctx;
 
         stage.setOnCloseRequest(e -> {
             Platform.exit();

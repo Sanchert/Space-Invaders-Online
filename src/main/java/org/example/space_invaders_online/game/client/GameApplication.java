@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import org.example.space_invaders_online.game.sceneController.GameContext;
 import org.example.space_invaders_online.game.sceneController.ScreenManager;
 import org.example.space_invaders_online.game.sceneController.ScreenType;
 
@@ -18,7 +19,10 @@ public class GameApplication extends Application {
     public void start(Stage stage) {
         stage.setTitle("Space Invaders Online");
 
-        screenManager = new ScreenManager(stage);
+        GameContext ctx = new GameContext();
+        ctx.setNetworkClient(new NetworkClient());
+
+        screenManager = new ScreenManager(stage, ctx);
         screenManager.switchScreen(ScreenType.MAIN_MENU);
     }
 

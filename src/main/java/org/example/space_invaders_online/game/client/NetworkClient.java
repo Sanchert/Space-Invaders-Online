@@ -27,13 +27,28 @@ public class NetworkClient {
 
     private final AtomicBoolean suppressDisconnectCallback = new AtomicBoolean(false);
 
-    public void connect(String host, int port) throws IOException {
-        disconnect(true);
-        socket = new Socket(host, port);
-        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                new BufferedOutputStream(socket.getOutputStream()),
-                StandardCharsets.UTF_8)), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+    public void connect(String host, int port) {
+        if (connected) {
+            return;
+        }
+//        disconnect(true);
+        try {
+            socket = new Socket(host, port);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+                    new BufferedOutputStream(socket.getOutputStream()),
+                    StandardCharsets.UTF_8)), true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         connected = true;
 
         Thread readerThread = new Thread(this::readLoop, "network-client-reader");

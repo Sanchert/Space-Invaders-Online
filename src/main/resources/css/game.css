@@ -1,6 +1,6 @@
 /* ========== GAME.CSS ========== */
 
-.game-root-hbox {
+.game-root {
     -fx-alignment: center;
     -fx-background-color: #050810;
 }

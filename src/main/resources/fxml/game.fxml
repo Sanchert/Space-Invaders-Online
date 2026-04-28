@@ -7,39 +7,36 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
 
-<HBox fx:id="gameRootHBox"
+<HBox
       alignment="CENTER_LEFT"
-      fillHeight="true"
       minWidth="0"
       minHeight="0"
       stylesheets="@../css/common.css,@../css/game.css"
-      styleClass="game-root-hbox"
+      styleClass="game-root"
       xmlns="http://javafx.com/javafx/8"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="org.example.space_invaders_online.game.sceneController.controllers.GameScreenController">
 
     <!-- minWidth=0: иначе дочерний layout может требовать ширину больше окна и обрезать HUD / поле -->
-    <StackPane fx:id="gameStack" minWidth="0" minHeight="0" HBox.hgrow="ALWAYS">
-
-        <Canvas fx:id="gameCanvas"
-                styleClass="game-canvas"/>
-
-        <HBox fx:id="gameControlButtons" styleClass="control-button-container" StackPane.alignment="TOP_RIGHT">
+    <StackPane minWidth="0" minHeight="0" HBox.hgrow="ALWAYS">
+        <!-- GAME FIELD -->
+        <Canvas fx:id="gameCanvas" styleClass="game-canvas"/>
+        <!-- GAME CONTROL BUTTONS -->
+        <HBox styleClass="control-button-container" StackPane.alignment="TOP_RIGHT">
             <Button fx:id="resumeButton" styleClass="control-button" id="resume-button" />
             <Button fx:id="pauseButton" styleClass="control-button" id="pause-button" />
         </HBox>
-
+        <!-- WIN OVERLAY -->
         <Label fx:id="winOverlayLabel"
                managed="false"
                styleClass="pause-title"
-               text=""
                visible="false"
                StackPane.alignment="TOP_CENTER">
             <StackPane.margin>
                 <Insets top="24.0" />
             </StackPane.margin>
         </Label>
-
+        <!-- PAUSE OVERLAY -->
         <VBox fx:id="pauseOverlay" styleClass="pause-overlay" visible="false" managed="false">
             <Label text="PAUSED" styleClass="pause-title"/>
             <Label text="Press ESC to resume" styleClass="pause-hint"/>
@@ -47,7 +44,8 @@
         </VBox>
     </StackPane>
 
-    <VBox fx:id="gameHudPanel"
+    <!--  Players List  -->
+    <VBox
           minWidth="180"
           prefWidth="220"
           maxWidth="220"
@@ -57,15 +55,16 @@
         <padding>
             <Insets bottom="16.0" left="8.0" right="12.0" top="16.0" />
         </padding>
-        <Label text="Игроки" styleClass="game-hud-title" />
-        <ScrollPane fx:id="gameHudScroll"
+        <Label text="Players" styleClass="game-hud-title" />
+        <!-- LIST -->
+        <ScrollPane fx:id="playersList"
                     fitToWidth="true"
                     hbarPolicy="NEVER"
                     minHeight="0"
                     styleClass="game-hud-scroll"
-                    vbarPolicy="AS_NEEDED"
                     VBox.vgrow="ALWAYS">
-            <VBox fx:id="gameHudRows" spacing="8" styleClass="game-hud-rows" />
+            <!-- PLAYER -->
+            <VBox fx:id="listRows" spacing="8" styleClass="game-hud-rows" />
         </ScrollPane>
     </VBox>
 </HBox>
