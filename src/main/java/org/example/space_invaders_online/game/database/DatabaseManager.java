@@ -92,4 +92,17 @@ public class DatabaseManager {
             sessionFactory.close();
         }
     }
+
+    public void recordShot(String playerName) {
+        PlayerStats stats = getOrCreatePlayer(playerName);
+        stats.addShot();
+        updatePlayerStats(stats);
+    }
+
+    public void recordHit(String playerName) {
+        PlayerStats stats = getOrCreatePlayer(playerName);
+        stats.addShot();
+        stats.addHit();
+        updatePlayerStats(stats);
+    }
 }

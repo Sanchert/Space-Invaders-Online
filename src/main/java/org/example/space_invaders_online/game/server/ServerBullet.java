@@ -33,7 +33,7 @@ public class ServerBullet extends ServerGameObject {
     }
 
     public DTOBullet toSerializable() {
-        return new DTOBullet(objectId, ownerId, pos_x, pos_y);
+        return new DTOBullet(objectId, ownerId, pos_x, pos_y, isDestroyed());
     }
 }
 

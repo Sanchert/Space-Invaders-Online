@@ -1,7 +1,5 @@
 package org.example.space_invaders_online.game.gameWorld;
 
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import org.example.space_invaders_online.game.client.MoveDirection;
 import org.example.space_invaders_online.game.client.Request;
 import org.example.space_invaders_online.game.server.*;
@@ -24,16 +22,13 @@ public class GameWorld {
 
     private int currentScore = 0;
     private static final int WIN_SCORE = 6;
-    private static final int NEAR_TARGET_POINTS = 6;
+    private static final int NEAR_TARGET_POINTS = 3;
     private static final int FAR_TARGET_POINTS = 6;
 
     public GameWorld(Server server) {
         this.server = server;
     }
 
-    /**
-     * Загружает матч: регистрирует игроков, затем выдаёт id мишеням выше любого id игрока.
-     */
     public void loadMatch(Collection<ServerPlayer> roster) {
         objects.clear();
         players.clear();
@@ -53,23 +48,13 @@ public class GameWorld {
         spawnInitialTargets();
     }
 
-    /** Мишени справа от игроков (логическая ширина поля до ~800 по X снаряда). */
     private void spawnInitialTargets() {
-        double x = 620.0;
+        double x = 520.0;
         double y = 30.0;
-
-        for (int i = 0; i < 3; i++) {
-            ServerTarget target = new ServerTarget(nextObjectId.getAndIncrement(), x, y, NEAR_TARGET_POINTS);
-            objects.put(target.objectId, target);
-            targets.put(target.objectId, target);
-            x += 45.0;
-            y += 4.0;
-        }
-
-        x = 740.0;
-        y = 30.0;
-        for (int i = 0; i < 2; i++) {
-            ServerTarget target = new ServerTarget(nextObjectId.getAndIncrement(), x, y, FAR_TARGET_POINTS);
+        int points = NEAR_TARGET_POINTS;
+        for (int i = 0; i < 5; i++) {
+            if (i == 3) points = FAR_TARGET_POINTS;
+            ServerTarget target = new ServerTarget(nextObjectId.getAndIncrement(), x, y, points);
             objects.put(target.objectId, target);
             targets.put(target.objectId, target);
             x += 45.0;
@@ -93,7 +78,9 @@ public class GameWorld {
 
     public void handleRequest(int playerId, Request request) {
         ServerPlayer player = players.get(playerId);
-        if (player == null || player.isDestroyed()) return;
+        if (player == null || player.isDestroyed()) {
+            return;
+        }
 
         switch (request.requestType()) {
             case MOVE_UP:
@@ -113,6 +100,9 @@ public class GameWorld {
                     );
                     objects.put(bullet.objectId, bullet);
                     bullets.put(bullet.objectId, bullet);
+                    if (server != null) {
+                        server.recordShot(playerId);
+                    }
                 }
                 break;
             case SET_NAME:
@@ -141,7 +131,6 @@ public class GameWorld {
                 if (checkCollision(bullet, target)) {
                     bullet.destroy();
                     target.destroy();
-
                     int points = target.getCost();
 
                     if (server == null) {
@@ -150,6 +139,7 @@ public class GameWorld {
                         ServerPlayer shooter = players.get(bullet.getOwnerId());
                         if (shooter != null) {
                             shooter.addScore(points);
+                            server.recordHit(shooter.objectId);
                         }
                     }
                     break;
@@ -171,8 +161,8 @@ public class GameWorld {
     }
 
     private void clearDestroyedObjects() {
-        objects.values().removeIf(ServerGameObject::isDestroyed);
         bullets.values().removeIf(ServerBullet::isDestroyed);
+        objects.values().removeIf(ServerGameObject::isDestroyed);
         targets.values().removeIf(ServerTarget::isDestroyed);
     }
 

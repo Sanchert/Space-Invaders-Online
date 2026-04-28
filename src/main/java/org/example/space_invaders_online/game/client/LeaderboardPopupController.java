@@ -23,7 +23,7 @@ public class LeaderboardPopupController {
     public void fillLeaderboard(List<PlayerStats> leaderboard) {
         leaderboardGrid.getChildren().clear();
 
-        String[] headers = {"#", "Player", "Wins", "Shots", "Hits", "Accuracy"};
+        String[] headers = {"#", "Player", "Wins", "Shots", "Hits"};
         for (int i = 0; i < headers.length; i++) {
             Label header = new Label(headers[i]);
             header.getStyleClass().add("leaderboard-popup-header");
@@ -42,10 +42,15 @@ public class LeaderboardPopupController {
             nameLabel.getStyleClass().add("leaderboard-popup-name");
             Label winsLabel = new Label(String.valueOf(stats.getWins()));
             winsLabel.getStyleClass().add("leaderboard-popup-wins");
-
-            leaderboardGrid.add(rankLabel, 0, row);
-            leaderboardGrid.add(nameLabel, 1, row);
-            leaderboardGrid.add(winsLabel, 2, row);
+            Label shotsLabel = new Label(String.valueOf(stats.getTotalShots()));
+            winsLabel.getStyleClass().add("leaderboard-popup-wins");
+            Label hitsLabel = new Label(String.valueOf(stats.getTotalHits()));
+            winsLabel.getStyleClass().add("leaderboard-popup-wins");
+            leaderboardGrid.add(rankLabel,  0, row);
+            leaderboardGrid.add(nameLabel,  1, row);
+            leaderboardGrid.add(winsLabel,  2, row);
+            leaderboardGrid.add(shotsLabel, 3, row);
+            leaderboardGrid.add(hitsLabel,  4, row);
         }
     }
 }

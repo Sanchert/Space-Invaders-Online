@@ -1,9 +1,5 @@
 package org.example.space_invaders_online.game.client;
-
-import org.example.space_invaders_online.game.database.PlayerStats;
 import org.example.space_invaders_online.game.server.ServerMessage;
-
-import java.util.List;
 
 public interface INetworkListener {
     void onInit(ServerMessage m);

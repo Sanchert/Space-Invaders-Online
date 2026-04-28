@@ -97,7 +97,8 @@ public class ServerPlayer extends ServerGameObject {
                 shoots,
                 score,
                 name != null ? name : "",
-                colorId
+                colorId,
+                isDestroyed()
         );
     }
 }

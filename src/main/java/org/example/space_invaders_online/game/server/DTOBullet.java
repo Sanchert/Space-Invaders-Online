@@ -5,13 +5,15 @@ public class DTOBullet {
     public int ownerId;
     public double pos_x;
     public double pos_y;
+    public boolean isDestroyed;
 
     public DTOBullet() {}
 
-    public DTOBullet(int id, int ownerId, double pos_x, double pos_y) {
+    public DTOBullet(int id, int ownerId, double pos_x, double pos_y, boolean isDestroyed) {
         this.objectID = id;
         this.ownerId = ownerId;
         this.pos_x = pos_x;
         this.pos_y = pos_y;
+        this.isDestroyed = isDestroyed;
     }
 }

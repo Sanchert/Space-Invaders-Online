@@ -10,10 +10,11 @@ public class DTOPlayer {
     public int shoots;
     public int score;
     public int colorID;
+    boolean isDestroyed;
 
     public DTOPlayer() {}
 
-    public DTOPlayer(int id, double pos_x, double pos_y, int shoots, int score, String name, int colorID) {
+    public DTOPlayer(int id, double pos_x, double pos_y, int shoots, int score, String name, int colorID, boolean isDestroyed) {
         this.objectID = id;
         this.pos_x = pos_x;
         this.pos_y = pos_y;
@@ -21,5 +22,6 @@ public class DTOPlayer {
         this.score = score;
         this.name = name;
         this.colorID = colorID;
+        this.isDestroyed = isDestroyed;
     }
 }

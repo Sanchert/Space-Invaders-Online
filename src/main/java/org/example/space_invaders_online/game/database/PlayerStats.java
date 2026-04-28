@@ -14,6 +14,12 @@ public class PlayerStats {
     @Column(nullable = false)
     private int wins = 0;
 
+    @Column(nullable = false)
+    private int totalShots = 0;
+
+    @Column(nullable = false)
+    private int totalHits = 0;
+
     public PlayerStats() {}
 
     public PlayerStats(String playerName) {
@@ -32,4 +38,9 @@ public class PlayerStats {
     public void setWins(int wins) { this.wins = wins; }
 
     public void addWin() { this.wins++; }
+
+    public void addShot() { this.totalShots++; }
+    public void addHit()  { this.totalHits++;  }
+    public int getTotalShots() { return totalShots; }
+    public int getTotalHits()  { return totalHits;  }
 }

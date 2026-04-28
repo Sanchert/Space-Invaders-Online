@@ -32,7 +32,7 @@ public class ServerTarget extends ServerGameObject {
     }
 
     public DTOTarget serialize() {
-        return new DTOTarget(objectId, pos_x, pos_y, cost);
+        return new DTOTarget(objectId, pos_x, pos_y, cost, isDestroyed());
     }
 
     @Override

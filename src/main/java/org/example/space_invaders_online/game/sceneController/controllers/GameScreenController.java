@@ -24,11 +24,10 @@ import org.example.space_invaders_online.game.server.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static java.util.stream.Collectors.toSet;
 
 public class GameScreenController extends BaseController implements INetworkListener {
 
-    @FXML private Canvas gameCanvas;
+    @FXML private static Canvas gameCanvas;
     @FXML private VBox listRows;
     @FXML private Label winOverlayLabel;
     @FXML private VBox pauseOverlay;
@@ -37,7 +36,7 @@ public class GameScreenController extends BaseController implements INetworkList
     @FXML private Button exitToMenuBtn;
     @FXML private Label pauseTitleLabel;
     @FXML private Label pauseHintLabel;
-    // Constants matching OnlineMatchClient (move to a shared Constants class later)
+
     private static final double LOGICAL_W = 900;
     private static final double LOGICAL_H = 320;
     private static final double PLAYER_W = 30, PLAYER_H = 50;
@@ -71,20 +70,18 @@ public class GameScreenController extends BaseController implements INetworkList
     public void initialize() {
         networkClient = gameContext.getNetworkClient();
         myPlayerId    = gameContext.getMyPlayerId();
-        networkClient.setListener(this); // take over from MenuScreenController
+        networkClient.setListener(this);
 
         initRequests();
 
         gc = gameCanvas.getGraphicsContext2D();
 
-        // Bind canvas size to its StackPane parent
-        StackPane gameStack = (StackPane) gameCanvas.getParent();
+        StackPane gameStack = (StackPane)gameCanvas.getParent();
         gameCanvas.widthProperty().bind(gameStack.widthProperty());
         gameCanvas.heightProperty().bind(gameStack.heightProperty());
 
         gameCanvas.setFocusTraversable(true);
         gameCanvas.setOnKeyPressed(this::onKeyPressed);
-        Platform.runLater(gameCanvas::requestFocus);
 
         winOverlayLabel.setVisible(false);
         winOverlayLabel.setManaged(false);
@@ -121,6 +118,7 @@ public class GameScreenController extends BaseController implements INetworkList
             case S      -> sendAction(RequestType.MOVE_DOWN);
             case D      -> sendAction(RequestType.SHOOT);
             case ESCAPE -> {
+                isRunning = !isRunning;
                 if (isRunning) sendAction(RequestType.PAUSE);
                 else           sendAction(RequestType.RESUME);
             }
@@ -129,20 +127,24 @@ public class GameScreenController extends BaseController implements INetworkList
 
     private void sendAction(RequestType type) {
         Request r = requests.get(type);
-        if (r != null && networkClient.isConnected()) networkClient.send(r);
+        if (r != null && networkClient.isConnected()) {
+            networkClient.send(r);
+        }
     }
 
     // == INetworkListener =================================================
 
-    @Override public void onInit(ServerMessage m) {}  // won't fire here
+    @Override public void onInit(ServerMessage m) {}
     @Override public void onNameAccepted() {}
     @Override public void onNameRejected() {}
     @Override public void onPlayerListUpdate(ServerMessage m) {}
-    @Override public void onGameStart() {}            // already on game screen
+    @Override public void onGameStart() {}
 
     @Override
     public void onGameState(ServerMessage m) {
-        if (m.currentGameState != null) updateGameState(m.currentGameState);
+        if (m.currentGameState != null) {
+            updateGameState(m.currentGameState);
+        }
     }
 
     @Override
@@ -157,7 +159,6 @@ public class GameScreenController extends BaseController implements INetworkList
         isRunning = true;
         pauseOverlay.setVisible(false);
         pauseOverlay.setManaged(false);
-        Platform.runLater(gameCanvas::requestFocus);
     }
 
     @Override
@@ -184,31 +185,30 @@ public class GameScreenController extends BaseController implements INetworkList
     }
 
     // == Game state update ============================================
-
     private void updateGameState(DTOGameState state) {
-        // Cleanup objects no longer present
-        Set<Integer> pIds = state.players != null ? state.players.stream().map(p -> p.objectID).collect(toSet()) : Set.of();
-        Set<Integer> bIds = state.bullets != null ? state.bullets.stream().map(b -> b.objectID).collect(toSet()) : Set.of();
-        Set<Integer> tIds = state.targets != null ? state.targets.stream().map(t -> t.objectID).collect(toSet()) : Set.of();
-        players.keySet().removeIf(id -> !pIds.contains(id));
-        bullets.keySet().removeIf(id -> !bIds.contains(id));
-        targets.keySet().removeIf(id -> !tIds.contains(id));
+        players.keySet().removeIf(id -> players.get(id).isDestroyed());
+        bullets.keySet().removeIf(id -> bullets.get(id).isDestroyed());
+        targets.keySet().removeIf(id -> targets.get(id).isDestroyed());
 
-        if (state.players != null) for (DTOPlayer dto : state.players) {
-            players.computeIfAbsent(dto.objectID, id -> new ClientPlayer(id, getColor(dto.colorID)))
-                    .updateFromServer(dto.pos_x, dto.pos_y, dto.shoots, dto.name);
+        if (state.players != null)
+            for (DTOPlayer dto : state.players) {
+                players.computeIfAbsent(dto.objectID, id -> new ClientPlayer(id, getColor(dto.colorID)))
+                        .updateFromServer(dto.pos_x, dto.pos_y, dto.shoots, dto.name);
         }
-        if (state.bullets != null) for (DTOBullet dto : state.bullets) {
-            bullets.computeIfAbsent(dto.objectID, id -> new ClientBullet(id, dto.pos_x, dto.pos_y))
-                    .updateFromServer(dto.pos_x, dto.pos_y);
+        if (state.bullets != null)
+            for (DTOBullet dto : state.bullets) {
+                bullets.computeIfAbsent(dto.objectID, id -> new ClientBullet(id, dto.pos_x, dto.pos_y))
+                        .updateFromServer(dto.pos_x, dto.pos_y);
         }
-        if (state.targets != null) for (DTOTarget dto : state.targets) {
-            targets.computeIfAbsent(dto.objectID, id -> new ClientTarget(id, dto.pos_x, dto.pos_y))
-                    .updateFromServer(dto.pos_x, dto.pos_y);
+        if (state.targets != null)
+            for (DTOTarget dto : state.targets) {
+                targets.computeIfAbsent(dto.objectID, id -> new ClientTarget(id, dto.pos_x, dto.pos_y))
+                        .updateFromServer(dto.pos_x, dto.pos_y);
         }
 
-        // Sync HUD panels
-        if (state.players != null) syncHudPanels(state.players);
+        if (state.players != null) {
+            syncHudPanels(state.players);
+        }
     }
 
     private void syncHudPanels(List<DTOPlayer> dtos) {
@@ -217,7 +217,7 @@ public class GameScreenController extends BaseController implements INetworkList
             active.add(dto.objectID);
             String name = (dto.name != null && !dto.name.isEmpty()) ? dto.name : "Player " + dto.objectID;
             PlayerInfoPanel panel = hudPanels.computeIfAbsent(dto.objectID, id -> {
-                PlayerInfoPanel p = new PlayerInfoPanel(id, name, dto.shoots, dto.colorID);
+                PlayerInfoPanel p = new PlayerInfoPanel(name, dto.shoots, dto.colorID);
                 listRows.getChildren().add(p);
                 return p;
             });
@@ -236,29 +236,39 @@ public class GameScreenController extends BaseController implements INetworkList
     }
 
     // === Rendering ==================================
+    private final static double w = gameCanvas.getWidth();
+    private final static double h = gameCanvas.getHeight();
+    private final static double scale = Math.min(w / LOGICAL_W, h / LOGICAL_H);
+    private final static double ox = (w - LOGICAL_W * scale) / 2;
+    private final static double oy = (h - LOGICAL_H * scale) / 2;
 
     private void renderFrame() {
-        if (gc == null) return;
-        double w = gameCanvas.getWidth(), h = gameCanvas.getHeight();
-        if (w <= 0 || h <= 0) return;
+        if (gc == null) {
+            return;
+        }
 
-        // Background
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+
         gc.setFill(javafx.scene.paint.Color.BLACK);
         gc.fillRect(0, 0, w, h);
-        if (imgBg != null && !imgBg.isError()) gc.drawImage(imgBg, 0, 0, w, h);
+        if (imgBg != null && !imgBg.isError()) {
+            gc.drawImage(imgBg, 0, 0, w, h);
+        }
 
-        double scale = Math.min(w / LOGICAL_W, h / LOGICAL_H);
-        double ox = (w - LOGICAL_W * scale) / 2;
-        double oy = (h - LOGICAL_H * scale) / 2;
-
-        for (ClientTarget t  : targets.values()) drawSprite(imgEnemy,  ox + t.getPosX()  * scale, oy + t.getPosY()  * scale, TARGET_W * scale, TARGET_H * scale, javafx.scene.paint.Color.RED);
-        for (ClientPlayer p  : players.values()) drawSprite(imgPlayer, ox + p.getPosX()  * scale, oy + p.getPosY()  * scale, PLAYER_W * scale, PLAYER_H * scale, p.getFillColor());
-        for (ClientBullet b  : bullets.values()) drawSprite(imgBullet, ox + b.getPosX()  * scale, oy + b.getPosY()  * scale, BULLET_W * scale, BULLET_H * scale, javafx.scene.paint.Color.YELLOW);
+        for (ClientTarget t : targets.values()) drawSprite(imgEnemy,  ox + t.getPosX() * scale, oy + t.getPosY() * scale, TARGET_W * scale, TARGET_H * scale, javafx.scene.paint.Color.RED);
+        for (ClientPlayer p : players.values()) drawSprite(imgPlayer, ox + p.getPosX() * scale, oy + p.getPosY() * scale, PLAYER_W * scale, PLAYER_H * scale, p.getFillColor());
+        for (ClientBullet b : bullets.values()) drawSprite(imgBullet, ox + b.getPosX() * scale, oy + b.getPosY() * scale, BULLET_W * scale, BULLET_H * scale, javafx.scene.paint.Color.YELLOW);
     }
 
-    private void drawSprite(Image img, double x, double y, double w, double h, javafx.scene.paint.Color fallback) {
-        if (img != null && !img.isError()) gc.drawImage(img, x, y, w, h);
-        else { gc.setFill(fallback); gc.fillRect(x, y, w, h); }
+    private void drawSprite(Image img, double pos_x, double pos_y, double w, double h, javafx.scene.paint.Color color) {
+        if (img != null && !img.isError()) {
+            gc.drawImage(img, pos_x, pos_y, w, h);
+        } else {
+            gc.setFill(color);
+            gc.fillRect(pos_x, pos_y, w, h);
+        }
     }
 
     private static Image loadImage(String path) {
@@ -277,11 +287,13 @@ public class GameScreenController extends BaseController implements INetworkList
     }
 
     private void onExitToMenu() {
-        renderLoop.stop();
         sendAction(RequestType.DISCONNECT);
+        renderLoop.stop();
         networkClient.setListener(null);
         hudPanels.clear();
-        players.clear(); bullets.clear(); targets.clear();
+        players.clear();
+        bullets.clear();
+        targets.clear();
         screenManager.switchScreen(ScreenType.MAIN_MENU, gameContext);
     }
 }

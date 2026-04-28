@@ -4,15 +4,13 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
 public class PlayerInfoPanel extends VBox {
-    private Label nameLabel;
-    private Label scoreLabel;
-    private Label shootsLabel;
-    private int playerId;
+    private final Label nameLabel;
+    private final Label scoreLabel;
+    private final Label shootsLabel;
     private final int colorId;
     private String currentName;
 
-    public PlayerInfoPanel(int playerId, String name, int shoots, int colorId) {
-        this.playerId = playerId;
+    public PlayerInfoPanel(String name, int shoots, int colorId) {
         this.colorId = colorId;
         this.currentName = name;
 

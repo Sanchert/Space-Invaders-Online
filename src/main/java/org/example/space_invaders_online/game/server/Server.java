@@ -14,6 +14,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.lang.Thread.sleep;
+
 public class Server {
     private static final int PORT = 12345;
     private static final int MAX_PLAYERS = 4;
@@ -29,7 +31,6 @@ public class Server {
 
     private ServerState state = ServerState.WAITING;
     private GameWorld gameWorld;
-    private Thread gameThread;
     private volatile boolean gameRunning = false;
 
     private final Gson gson = new Gson();
@@ -39,7 +40,6 @@ public class Server {
             serverSocket = new ServerSocket(PORT);
             System.out.println("[SERVER] Started on port " + PORT);
 
-            // Thread для принятия подключений
             new Thread(this::acceptClients).start();
 
         } catch (IOException e) {
@@ -52,7 +52,7 @@ public class Server {
             try {
 
                 if (clients.size() >= MAX_PLAYERS && state != ServerState.RUNNING) {
-                    Thread.sleep(1000);
+                    wait(5000);
                     continue;
                 }
 
@@ -68,7 +68,6 @@ public class Server {
 
                 System.out.println("[SERVER] Player " + playerId + " connected");
 
-                // Отправляем INIT сообщение
                 sendInitMessage(playerId);
 
             } catch (Exception e) {
@@ -97,37 +96,19 @@ public class Server {
 
     public void handleClientRequest(int playerId, Request request) {
         switch (request.requestType()) {
-            case SET_NAME:
-                handleSetName(playerId, request.args());
-                break;
-
-            case START:
-                handleReadyToggle(playerId);
-                break;
-
-            case PAUSE:
-                handlePauseRequest(playerId, true);
-                break;
-
-            case RESUME:
-                handlePauseRequest(playerId, false);
-                break;
-
-            case SHOOT:
-            case MOVE_UP:
-            case MOVE_DOWN:
+            case SET_NAME        -> handleSetName(playerId, request.args());
+            case START           -> handleReadyToggle(playerId);
+            case PAUSE           -> handlePauseRequest(playerId, true);
+            case RESUME          -> handlePauseRequest(playerId, false);
+            case GET_LEADERBOARD -> sendLeaderboard(playerId);
+            case DISCONNECT      -> removeClient(playerId);
+            case SHOOT,
+                 MOVE_UP,
+                 MOVE_DOWN       -> {
                 if (state == ServerState.RUNNING && gameWorld != null) {
                     gameWorld.handleRequest(playerId, request);
                 }
-                break;
-
-            case GET_LEADERBOARD:
-                sendLeaderboard(playerId);
-                break;
-
-            case DISCONNECT:
-                removeClient(playerId);
-                break;
+            }
         }
     }
 
@@ -145,7 +126,7 @@ public class Server {
         }
 
         usedNames.add(name);
-        int slot = gamePlayers.size(); // 0-based slot before this player is added
+        int slot = gamePlayers.size();
         ServerPlayer player = new ServerPlayer(playerId, 21f, 60f + slot * 60f, 10, playerId % 4);
         player.setName(name);
         gamePlayers.put(playerId, player);
@@ -215,7 +196,7 @@ public class Server {
         gameWorld.loadMatch(gamePlayers.values());
 
         gameRunning = true;
-        gameThread = new Thread(this::gameLoop);
+        Thread gameThread = new Thread(this::gameLoop);
         gameThread.start();
 
         broadcastGameStart();
@@ -237,7 +218,7 @@ public class Server {
             }
 
             try {
-                Thread.sleep(1);
+                sleep(1);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -247,6 +228,7 @@ public class Server {
 
     private void pauseGame() {
         state = ServerState.PAUSED;
+        gameLoop();
         ServerTime.setPaused(true);
         broadcastGamePaused();
     }
@@ -321,23 +303,17 @@ public class Server {
 
         List<DTOPlayer> serializablePlayers = new ArrayList<>();
         for (ServerPlayer player : gameWorld.getPlayers().values()) {
-            if (!player.isDestroyed()) {
-                serializablePlayers.add(player.serialize());
-            }
+            serializablePlayers.add(player.serialize());
         }
 
         List<DTOBullet> serializableBullets = new ArrayList<>();
         for (ServerBullet bullet : gameWorld.getBullets().values()) {
-            if (!bullet.isDestroyed()) {
-                serializableBullets.add(bullet.toSerializable());
-            }
+            serializableBullets.add(bullet.toSerializable());
         }
 
         List<DTOTarget> serializableTargets = new ArrayList<>();
         for (ServerTarget target : gameWorld.getTargets().values()) {
-            if (!target.isDestroyed()) {
-                serializableTargets.add(target.serialize());
-            }
+            serializableTargets.add(target.serialize());
         }
 
         DTOGameState state = new DTOGameState(
@@ -476,11 +452,22 @@ public class Server {
         }
     }
 
+    public void recordHit(int playerId) {
+        ServerPlayer p = gamePlayers.get(playerId);
+        if (p != null && p.getName() != null)
+            DatabaseManager.getInstance().recordHit(p.getName());
+    }
+
+    public void recordShot(int playerId) {
+        ServerPlayer p = gamePlayers.get(playerId);
+        if (p != null && p.getName() != null)
+            DatabaseManager.getInstance().recordShot(p.getName());
+    }
+
     public static void main(String[] args) {
         Server server = new Server();
         server.start();
 
-        // Добавляем shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             DatabaseManager.getInstance().shutdown();
             server.stop();

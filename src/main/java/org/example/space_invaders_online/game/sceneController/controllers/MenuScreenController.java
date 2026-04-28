@@ -48,6 +48,7 @@ public class MenuScreenController extends BaseController implements INetworkList
 
 
     private final Map<Integer, PlayerInfoPanel> lobbyPanels = new HashMap<>();
+
     public MenuScreenController(ScreenManager screenManager, GameContext gameContext) {
         super(screenManager, gameContext);
     }
@@ -73,7 +74,7 @@ public class MenuScreenController extends BaseController implements INetworkList
 
         networkClient = gameContext.getNetworkClient();
         networkClient.setListener(this);
-        System.out.println("menu");
+
         try {
             networkClient.connect("localhost", 12345);
         } catch (Exception e) {
@@ -177,10 +178,11 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     private void onConfirmName() {
         String name = nameField.getText().trim();
-        if (name.length() < 3) { showError("Name must be at least 2 characters"); return; }
+        if (name.length() < 2) {
+            showError("Name must be at least 2 characters");
+            return;
+        }
         gameContext.setPlayerName(name);
-        System.out.println("confirm");
-        // We are already connected and have a playerId → send name immediately
         if (networkClient.isConnected() && gameContext.getMyPlayerId() != -1) {
             networkClient.send(new Request(RequestType.SET_NAME, name,
                     gameContext.getMyPlayerId()));
@@ -257,7 +259,7 @@ public class MenuScreenController extends BaseController implements INetworkList
             PlayerInfoPanel panel = lobbyPanels.get(dto.objectID);
             if (panel == null) {
                 // New player joined — create a panel
-                panel = new PlayerInfoPanel(dto.objectID, displayName, dto.shoots, dto.colorID);
+                panel = new PlayerInfoPanel(displayName, dto.shoots, dto.colorID);
                 lobbyPanels.put(dto.objectID, panel);
                 playersList.getChildren().add(panel);
             }

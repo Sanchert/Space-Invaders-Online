@@ -7,7 +7,7 @@ module org.example.space_invaders_online {
     requires javafx.media;
     requires jakarta.persistence;
     requires org.hibernate.orm.core;
-//    requires org.example.space_invaders_online;
+
     requires java.naming;
     exports org.example.space_invaders_online.game.database;
     opens org.example.space_invaders_online.game.database to com.google.gson, org.hibernate.orm.core, javafx.fxml;

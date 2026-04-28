@@ -31,7 +31,7 @@ public class NetworkClient {
         if (connected) {
             return;
         }
-//        disconnect(true);
+
         try {
             socket = new Socket(host, port);
         } catch (IOException e) {
@@ -71,9 +71,6 @@ public class NetworkClient {
         return connected && socket != null && !socket.isClosed();
     }
 
-    /**
-     * @param notifyListener if false, {@link INetworkListener#onDisconnected()} is not invoked when the reader stops
-     */
     public void disconnect(boolean notifyListener) {
         suppressDisconnectCallback.set(!notifyListener);
         connected = false;
