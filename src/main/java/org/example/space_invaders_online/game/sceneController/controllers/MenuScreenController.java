@@ -26,6 +26,7 @@ public class MenuScreenController extends BaseController implements INetworkList
     @FXML private VBox mainMenuContent;
     @FXML private Button singlePlayerBtn;
     @FXML private Button onlineGameBtn;
+    @FXML private Button leaderboardBtn;
     @FXML private Button optionsBtn;
     @FXML private Button exitBtn;
 
@@ -60,7 +61,7 @@ public class MenuScreenController extends BaseController implements INetworkList
         backToMenuBtn   .setOnAction(e -> showMainMenu());
         lobbyBackBtn    .setOnAction(e -> onLobbyBack());
         readyBtn        .setOnAction(e -> onReady());
-
+        leaderboardBtn  .setOnAction(e -> onLeaderboard());
         Platform.runLater(() -> {
             if (screenManager.getStage().getScene() != null) {
                 screenManager.getStage().getScene().addEventFilter(KeyEvent.KEY_PRESSED, this::onKeyPressed);
@@ -71,6 +72,11 @@ public class MenuScreenController extends BaseController implements INetworkList
 
         networkClient = gameContext.getNetworkClient();
         networkClient.setListener(this);
+    }
+
+    private void onLeaderboard() {
+        networkClient.send(new Request(RequestType.PAUSE, "", gameContext.getMyPlayerId()));
+        networkClient.send(new Request(RequestType.GET_LEADERBOARD, "", gameContext.getMyPlayerId()));
     }
 
     private void onKeyPressed(KeyEvent event) {
@@ -288,8 +294,8 @@ public class MenuScreenController extends BaseController implements INetworkList
 
     }
     @Override
-    public void onLeaderBoard(List<PlayerStats> board) {
-
+    public void onLeaderBoard(ServerMessage m) {
+        new LeaderboardPopup().show(m.leaderboard);
     }
 
     @Override

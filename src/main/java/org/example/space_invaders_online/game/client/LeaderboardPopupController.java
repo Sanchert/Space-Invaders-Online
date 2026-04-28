@@ -42,19 +42,10 @@ public class LeaderboardPopupController {
             nameLabel.getStyleClass().add("leaderboard-popup-name");
             Label winsLabel = new Label(String.valueOf(stats.getWins()));
             winsLabel.getStyleClass().add("leaderboard-popup-wins");
-            Label shotsLabel = new Label(String.valueOf(stats.getTotalShots()));
-            shotsLabel.getStyleClass().add("leaderboard-popup-muted");
-            Label hitsLabel = new Label(String.valueOf(stats.getTotalHits()));
-            hitsLabel.getStyleClass().add("leaderboard-popup-muted");
-            Label accuracyLabel = new Label(String.format("%.1f%%", stats.getAccuracy()));
-            accuracyLabel.getStyleClass().add("leaderboard-popup-accuracy");
 
             leaderboardGrid.add(rankLabel, 0, row);
             leaderboardGrid.add(nameLabel, 1, row);
             leaderboardGrid.add(winsLabel, 2, row);
-            leaderboardGrid.add(shotsLabel, 3, row);
-            leaderboardGrid.add(hitsLabel, 4, row);
-            leaderboardGrid.add(accuracyLabel, 5, row);
         }
     }
 }

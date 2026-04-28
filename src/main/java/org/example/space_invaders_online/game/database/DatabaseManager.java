@@ -78,23 +78,12 @@ public class DatabaseManager {
         updatePlayerStats(stats);
     }
 
-    public void recordShot(String playerName, boolean hit) {
-        PlayerStats stats = getOrCreatePlayer(playerName);
-        stats.addShot();
-        if (hit) {
-            stats.addHit();
-        }
-        updatePlayerStats(stats);
-    }
-
     public List<PlayerStats> getLeaderboard() {
         try (Session session = sessionFactory.openSession()) {
-            Query<PlayerStats> query = session.createQuery(
-                    "FROM PlayerStats " +
-                            "ORDER BY wins DESC, " +
-                            "CASE WHEN totalShots = 0 THEN 0.0 ELSE (totalHits * 100.0 / totalShots) END DESC",
-                    PlayerStats.class);
-            return query.setMaxResults(10).list();
+            return session.createQuery(
+                            "FROM PlayerStats ORDER BY wins DESC", PlayerStats.class)
+                    .setMaxResults(10)
+                    .list();
         }
     }
 

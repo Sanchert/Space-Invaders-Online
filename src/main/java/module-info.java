@@ -16,8 +16,6 @@ module org.example.space_invaders_online {
     exports org.example.space_invaders_online;
     exports org.example.space_invaders_online.game.server;
     opens org.example.space_invaders_online.game.server to javafx.fxml;
-    exports org.example.space_invaders_online.game.utils;
-    opens org.example.space_invaders_online.game.utils to javafx.fxml;
     exports org.example.space_invaders_online.game.gameWorld;
     opens org.example.space_invaders_online.game.gameWorld to javafx.fxml;
     exports org.example.space_invaders_online.game.client;

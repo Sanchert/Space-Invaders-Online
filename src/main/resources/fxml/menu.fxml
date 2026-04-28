@@ -23,6 +23,7 @@
         <VBox fx:id="mainMenuContent" alignment="CENTER" managed="false" spacing="15" styleClass="main-menu-button-container" translateY="180" visible="false">
             <Button fx:id="singlePlayerBtn" styleClass="menu-button" text="Single player" />
             <Button fx:id="onlineGameBtn"   styleClass="menu-button" text="Online game" />
+            <Button fx:id="leaderboardBtn"  styleClass="menu-button" text="Leaders" />
             <Button fx:id="optionsBtn"      styleClass="menu-button" text="Options" />
             <Button fx:id="exitBtn" styleClass="menu-button" text="Exit" />
         </VBox>

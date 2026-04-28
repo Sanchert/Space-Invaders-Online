@@ -15,6 +15,6 @@ public interface INetworkListener {
     void onGamePaused();
     void onGameResumed();
     void onWin(ServerMessage m);
-    void onLeaderBoard(List<PlayerStats> board);
+    void onLeaderBoard(ServerMessage m);
     void onDisconnected();
 }

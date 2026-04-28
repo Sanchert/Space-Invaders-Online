@@ -50,6 +50,7 @@ public class Server {
     private void acceptClients() {
         while (true) {
             try {
+                // FIXME: reject accept new players
                 if (clients.size() >= MAX_PLAYERS && state != ServerState.RUNNING) {
                     Thread.sleep(1000);
                     continue;
@@ -113,13 +114,6 @@ public class Server {
                 break;
 
             case SHOOT:
-                if (state == ServerState.RUNNING && gameWorld != null) {
-                    gameWorld.handleRequest(playerId, request);
-                    DatabaseManager.getInstance().recordShot(
-                            gamePlayers.get(playerId).getName(), false); // hit будет обновлён позже
-                }
-                break;
-
             case MOVE_UP:
             case MOVE_DOWN:
                 if (state == ServerState.RUNNING && gameWorld != null) {
@@ -151,8 +145,8 @@ public class Server {
         }
 
         usedNames.add(name);
-
-        ServerPlayer player = new ServerPlayer(playerId, 21f, 60f + (clients.size() - 1) * 60f, 10, playerId % 4);
+        int slot = gamePlayers.size(); // 0-based slot before this player is added
+        ServerPlayer player = new ServerPlayer(playerId, 21f, 60f + slot * 60f, 10, playerId % 4);
         player.setName(name);
         gamePlayers.put(playerId, player);
 
@@ -199,24 +193,18 @@ public class Server {
     }
 
     private boolean allPlayersReady() {
-        if (gamePlayers.size() < 2) return false; // Минимум 2 игровых игрока для начала
-        for (Integer playerId : gamePlayers.keySet()) {
-            if (!Boolean.TRUE.equals(readyStatus.get(playerId))) {
-                return false;
-            }
+        if (gamePlayers.size() < 2) return false;
+        // Only check players who have completed name registration
+        for (Integer id : gamePlayers.keySet()) {
+            if (!Boolean.TRUE.equals(readyStatus.get(id))) return false;
         }
         return true;
     }
 
-    /** Пауза симуляции только если каждый подключённый клиент запросил паузу. */
     private boolean allPlayersPaused() {
-        if (gamePlayers.isEmpty()) {
-            return false;
-        }
+        if (gamePlayers.isEmpty()) return false;
         for (Integer id : gamePlayers.keySet()) {
-            if (!Boolean.TRUE.equals(pauseRequest.get(id))) {
-                return false;
-            }
+            if (!Boolean.TRUE.equals(pauseRequest.get(id))) return false;
         }
         return true;
     }
@@ -234,27 +222,22 @@ public class Server {
     }
 
     private void gameLoop() {
-        long lastTime = System.nanoTime();
-        final double TICK_RATE = 60.0;
-        final double TIME_PER_TICK = 1_000_000_000.0 / TICK_RATE;
-        double delta = 0;
+        ServerTime.reset();
 
         while (gameRunning) {
             long now = System.nanoTime();
-            delta += (now - lastTime) / TIME_PER_TICK;
-            lastTime = now;
+            int ticks = ServerTime.calculateTicksToProcess(now);
 
-            while (delta >= 1 && gameRunning) {
+            for (int i = 0; i < ticks && gameRunning; i++) {
                 if (state == ServerState.RUNNING) {
                     gameWorld.update();
                     checkWinCondition();
-                    broadcastGameState();
+                    broadcastGameState(); // once per tick = 60/s
                 }
-                delta--;
             }
 
             try {
-                Thread.sleep(10);
+                Thread.sleep(1); // yield, not 10ms — avoids missing ticks
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -262,18 +245,15 @@ public class Server {
         }
     }
 
-    /**
-     * Пауза: игровой поток продолжает работать, но цикл {@link #gameLoop} не вызывает
-     * {@link GameWorld#update()} и не рассылает состояние, пока {@link #state} == PAUSED.
-     */
     private void pauseGame() {
         state = ServerState.PAUSED;
+        ServerTime.setPaused(true);
         broadcastGamePaused();
     }
 
-    /** Снятие паузы: хотя бы один игрок не в режиме «пауза» — симуляция снова идёт. */
     private void resumeGame() {
         state = ServerState.RUNNING;
+        ServerTime.setPaused(false);
         broadcastGameResumed();
     }
 
@@ -467,9 +447,6 @@ public class Server {
         readyStatus.remove(playerId);
         pauseRequest.remove(playerId);
 
-        // Пауза включалась только при «все на паузе». После выхода игрока оставшиеся всё ещё
-        // могут иметь pause=true — allPlayersPaused() остаётся true, и симуляция зависла бы.
-        // Ушедший не участвует в кворуме: снимаем паузу и обнуляем запросы у оставшихся.
         if (state == ServerState.PAUSED && !gamePlayers.isEmpty()) {
             for (Integer id : gamePlayers.keySet()) {
                 pauseRequest.put(id, false);

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "player_stats")
 public class PlayerStats {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -13,21 +12,13 @@ public class PlayerStats {
     private String playerName;
 
     @Column(nullable = false)
-    private int wins;
-
-    @Column(nullable = false)
-    private int totalShots;
-
-    @Column(nullable = false)
-    private int totalHits;
+    private int wins = 0;
 
     public PlayerStats() {}
 
     public PlayerStats(String playerName) {
         this.playerName = playerName;
         this.wins = 0;
-        this.totalShots = 0;
-        this.totalHits = 0;
     }
 
     // Getters and Setters
@@ -41,19 +32,4 @@ public class PlayerStats {
     public void setWins(int wins) { this.wins = wins; }
 
     public void addWin() { this.wins++; }
-
-    public int getTotalShots() { return totalShots; }
-    public void setTotalShots(int totalShots) { this.totalShots = totalShots; }
-
-    public void addShot() { this.totalShots++; }
-
-    public int getTotalHits() { return totalHits; }
-    public void setTotalHits(int totalHits) { this.totalHits = totalHits; }
-
-    public void addHit() { this.totalHits++; }
-
-    public double getAccuracy() {
-        if (totalShots == 0) return 0.0;
-        return (double) totalHits / totalShots * 100;
-    }
 }
