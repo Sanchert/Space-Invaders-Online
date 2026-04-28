@@ -248,20 +248,16 @@ public class Server {
         }
     }
 
-    private void endGame(String winnerName) {
+    public void endGame(String winnerName) {
         gameRunning = false;
 
         DatabaseManager db = DatabaseManager.getInstance();
         gamePlayers.values().forEach(sp -> {
             String name = sp.getName();
-            if (name == null || name.isEmpty()) {
-                return;
-            }
-            PlayerStats stats = db.getOrCreatePlayer(name);
+            if (name == null || name.isEmpty()) return;
             if (name.equals(winnerName)) {
-                stats.addWin();
+                db.recordWin(name);
             }
-            db.updatePlayerStats(stats);
         });
 
         ServerMessage message = new ServerMessage();

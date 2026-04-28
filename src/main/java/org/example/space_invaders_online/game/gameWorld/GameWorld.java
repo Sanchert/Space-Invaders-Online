@@ -167,16 +167,11 @@ public class GameWorld {
     }
 
     private void checkWinCondition() {
-        if (server == null) {
-            if (currentScore >= WIN_SCORE) {
-                winner = "Player";
-            }
-        } else {
-            for (ServerPlayer player : players.values()) {
-                if (player.getScore() >= WIN_SCORE) {
-                    winner = player.getName();
-                    break;
-                }
+        for (ServerPlayer player : players.values()) {
+            if (player.getScore() >= WIN_SCORE) {
+                winner = player.getName();
+                if (server != null) server.endGame(winner);  // single call
+                return;
             }
         }
     }
