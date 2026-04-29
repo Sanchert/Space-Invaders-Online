@@ -18,6 +18,10 @@ public class Server {
     private static final int PORT = 12345;
     private static final int MAX_PLAYERS = 4;
 
+    private static final String OBSERVER_PREFIX = "OBSERVER_";
+    private static final String WATCHER_PREFIX  = "WATCHER_";
+    private final Set<Integer> observers = ConcurrentHashMap.newKeySet();
+
     private ServerSocket serverSocket;
     private final Map<Integer, ClientHandler> clients = new ConcurrentHashMap<>();
     private final Map<Integer, ServerPlayer> gamePlayers = new ConcurrentHashMap<>();
@@ -48,11 +52,6 @@ public class Server {
     private void acceptClients() {
         while (true) {
             try {
-
-                if (clients.size() >= MAX_PLAYERS && state != ServerState.RUNNING) {
-                    wait(5000);
-                    continue;
-                }
 
                 Socket socket = serverSocket.accept();
                 int playerId = nextPlayerId.getAndIncrement();
@@ -95,15 +94,17 @@ public class Server {
     public void handleClientRequest(int playerId, Request request) {
         switch (request.requestType()) {
             case SET_NAME        -> handleSetName(playerId, request.args());
-            case START           -> handleReadyToggle(playerId);
-            case PAUSE           -> handlePauseRequest(playerId, true);
-            case RESUME          -> handlePauseRequest(playerId, false);
+            case START           -> { if (!observers.contains(playerId)) handleReadyToggle(playerId); }
+            case PAUSE           -> { if (!observers.contains(playerId)) handlePauseRequest(playerId, true);  }
+            case RESUME          -> { if (!observers.contains(playerId)) handlePauseRequest(playerId, false); }
             case GET_LEADERBOARD -> sendLeaderboard(playerId);
             case DISCONNECT      -> removeClient(playerId);
             case SHOOT,
                  MOVE_UP,
                  MOVE_DOWN       -> {
-                if (state == ServerState.RUNNING && gameWorld != null) {
+                if (!observers.contains(playerId)
+                        && state == ServerState.RUNNING
+                        && gameWorld != null) {
                     gameWorld.handleRequest(playerId, request);
                 }
             }
@@ -118,6 +119,23 @@ public class Server {
 
         name = name.trim();
 
+        if (name.startsWith(OBSERVER_PREFIX) || name.startsWith(WATCHER_PREFIX)) {
+            observers.add(playerId);
+            sendNameResponse(playerId, true);
+            System.out.println("[SERVER] Player " + playerId + " joined as observer: " + name);
+            if (state == ServerState.RUNNING) {
+                sendCurrentGameState(playerId);
+            } else {
+                broadcastPlayerListTo(playerId);
+            }
+            return;
+        }
+
+        if (gamePlayers.size() >= MAX_PLAYERS) {
+            clients.remove(playerId);
+            sendNameResponse(playerId, false);
+            return;
+        }
         if (usedNames.contains(name)) {
             sendNameResponse(playerId, false);
             return;
@@ -136,30 +154,18 @@ public class Server {
     private void sendNameResponse(int playerId, boolean accepted) {
         ServerMessage message = new ServerMessage();
         message.type = accepted ? ServerAnswerType.NAME_ACCEPTED : ServerAnswerType.NAME_REJECTED;
-
-        try {
-            ClientHandler handler = clients.get(playerId);
-            if (handler != null) {
-                handler.sendMessage(gson.toJson(message));
-            }
-        } catch (IOException e) {
-            System.err.println("[SERVER] Failed to send name response: " + e.getMessage());
-        }
+        sendTo(playerId, message);
     }
 
     private void handleReadyToggle(int playerId) {
         boolean next = !Boolean.TRUE.equals(readyStatus.get(playerId));
         readyStatus.put(playerId, next);
         broadcastPlayerList();
-
-        if (state == ServerState.WAITING && allPlayersReady()) {
-            startGame();
-        }
+        if (state == ServerState.WAITING && allPlayersReady()) startGame();
     }
 
     private void handlePauseRequest(int playerId, boolean requestingPause) {
         pauseRequest.put(playerId, requestingPause);
-
         if (requestingPause) {
             if (allPlayersPaused()) {
                 pauseGame();
@@ -173,7 +179,6 @@ public class Server {
 
     private boolean allPlayersReady() {
         if (gamePlayers.size() < 2) return false;
-        // Only check players who have completed name registration
         for (Integer id : gamePlayers.keySet()) {
             if (!Boolean.TRUE.equals(readyStatus.get(id))) return false;
         }
@@ -181,46 +186,40 @@ public class Server {
     }
 
     private boolean allPlayersPaused() {
-        if (gamePlayers.isEmpty()) return false;
+        if (gamePlayers.isEmpty()){
+            return false;
+        }
         for (Integer id : gamePlayers.keySet()) {
-            if (!Boolean.TRUE.equals(pauseRequest.get(id))) return false;
+            if (!Boolean.TRUE.equals(pauseRequest.get(id))) {
+                return false;
+            }
         }
         return true;
     }
 
     private void startGame() {
-        state = ServerState.RUNNING;
+        state     = ServerState.RUNNING;
         gameWorld = new GameWorld(this);
         gameWorld.loadMatch(gamePlayers.values());
-
         gameRunning = true;
-        Thread gameThread = new Thread(this::gameLoop);
-        gameThread.start();
 
+        new Thread(this::gameLoop).start();
         broadcastGameStart();
     }
 
     private void gameLoop() {
         ServerTime.reset();
-
         while (gameRunning) {
-            long now = System.nanoTime();
-            int ticks = ServerTime.calculateTicksToProcess(now);
-
+            long now   = System.nanoTime();
+            int  ticks = ServerTime.calculateTicksToProcess(now);
             for (int i = 0; i < ticks && gameRunning; i++) {
                 if (state == ServerState.RUNNING) {
                     gameWorld.update();
-
                     String winner = gameWorld.hasWinner();
-                    if (winner != null) {
-                        endGame(winner);
-                        return;
-                    }
-
+                    if (winner != null) { endGame(winner); return; }
                     broadcastGameState();
                 }
             }
-
             try {
                 Thread.sleep(1);
             } catch (InterruptedException e) {
@@ -230,7 +229,7 @@ public class Server {
         }
     }
 
-    private void pauseGame() {
+    private void pauseGame()  {
         state = ServerState.PAUSED;
         ServerTime.setPaused(true);
         broadcastGamePaused();
@@ -242,198 +241,143 @@ public class Server {
         broadcastGameResumed();
     }
 
-    private void checkWinCondition() {
-        if (gameWorld == null) return;
-
-        String winner = gameWorld.hasWinner();
-        if (winner != null) {
-            endGame(winner);
-        }
-    }
-
     public void endGame(String winnerName) {
         gameRunning = false;
-
         DatabaseManager db = DatabaseManager.getInstance();
         gamePlayers.values().forEach(sp -> {
-            String name = sp.getName();
-            if (name == null || name.isEmpty()) return;
-            db.getOrCreate(name);
-            if (name.equals(winnerName)) {
-                db.recordWin(name);
-            }
+            String n = sp.getName();
+            if (n == null || n.isEmpty()) return;
+            db.getOrCreate(n);
+            if (n.equals(winnerName)) db.recordWin(n);
         });
 
-        ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.WIN;
-        message.args = winnerName;
-
-        String jsonMessage = gson.toJson(message);
-        for (ClientHandler client : clients.values()) {
-            try {
-                client.sendMessage(jsonMessage);
-            } catch (IOException e) {
-                System.err.println("[SERVER] Failed to send win message: " + e.getMessage());
-            }
-        }
+        ServerMessage msg = new ServerMessage();
+        msg.type = ServerAnswerType.WIN;
+        msg.args = winnerName;
+        broadcast(msg);
 
         resetForNextGame();
     }
 
     private void resetForNextGame() {
-        state = ServerState.WAITING;
+        state     = ServerState.WAITING;
         gameWorld = null;
-
         gamePlayers.clear();
         usedNames.clear();
-
         for (Integer id : clients.keySet()) {
             readyStatus.put(id, false);
             pauseRequest.put(id, false);
         }
-
         broadcastPlayerList();
+    }
+
+    private void broadcast(ServerMessage msg) {
+        String json = gson.toJson(msg);
+        for (ClientHandler ch : clients.values()) {
+            try { ch.sendMessage(json); } catch (IOException e) {
+                System.err.println("[SERVER] broadcast error: " + e.getMessage());
+            }
+        }
     }
 
     private void broadcastGameState() {
         if (gameWorld == null) return;
 
-        List<DTOPlayer> serializablePlayers = new ArrayList<>();
-        for (ServerPlayer player : gameWorld.getPlayers().values()) {
-            serializablePlayers.add(player.serialize());
+        List<DTOPlayer> serPlayers = new ArrayList<>();
+        for (ServerPlayer p : gameWorld.getPlayers().values())  serPlayers.add(p.serialize());
+        List<DTOBullet> serBullets = new ArrayList<>();
+        for (ServerBullet b : gameWorld.getBullets().values())  serBullets.add(b.toSerializable());
+        List<DTOTarget> serTargets = new ArrayList<>();
+        for (ServerTarget t : gameWorld.getTargets().values())  serTargets.add(t.serialize());
+
+        DTOGameState gs  = new DTOGameState(serPlayers, serBullets, serTargets);
+        ServerMessage msg = new ServerMessage();
+        msg.type             = ServerAnswerType.UPDATE;
+        msg.currentGameState = gs;
+        broadcast(msg);
+    }
+
+    private void sendCurrentGameState(int playerId) {
+        if (gameWorld == null) {
+            return;
         }
-
-        List<DTOBullet> serializableBullets = new ArrayList<>();
-        for (ServerBullet bullet : gameWorld.getBullets().values()) {
-            serializableBullets.add(bullet.toSerializable());
+        List<DTOPlayer> servPlayers = new ArrayList<>();
+        for (ServerPlayer p : gameWorld.getPlayers().values()) {
+            servPlayers.add(p.serialize());
         }
-
-        List<DTOTarget> serializableTargets = new ArrayList<>();
-        for (ServerTarget target : gameWorld.getTargets().values()) {
-            serializableTargets.add(target.serialize());
-        }
-
-        DTOGameState state = new DTOGameState(
-                serializablePlayers,
-                serializableBullets,
-                serializableTargets
-        );
-
-        ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.UPDATE;
-        message.currentGameState = state;
-
-        String jsonMessage = gson.toJson(message);
-
-        for (ClientHandler client : clients.values()) {
-            try {
-                client.sendMessage(jsonMessage);
-            } catch (IOException e) {
-                System.err.println("[SERVER] Failed to send state: " + e.getMessage());
-            }
-        }
+        DTOGameState gs = new DTOGameState(servPlayers, new ArrayList<>(), new ArrayList<>());
+        ServerMessage msg = new ServerMessage();
+        msg.type = ServerAnswerType.UPDATE;
+        msg.currentGameState = gs;
+        sendTo(playerId, msg);
     }
 
     private void broadcastPlayerList() {
-        // Отправляем обновлённый список игроков
-        ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.PLAYER_LIST_UPDATE;
-        message.players = new ArrayList<>();
-        for (ServerPlayer p : gamePlayers.values()) {
-            message.players.add(p.serialize());
-        }
+        ServerMessage msg = new ServerMessage();
+        msg.type    = ServerAnswerType.PLAYER_LIST_UPDATE;
+        msg.players = new ArrayList<>();
+        for (ServerPlayer p : gamePlayers.values()) msg.players.add(p.serialize());
+        broadcast(msg);
+    }
 
-        String jsonMessage = gson.toJson(message);
-
-        for (ClientHandler client : clients.values()) {
-            try {
-                client.sendMessage(jsonMessage);
-            } catch (IOException e) {
-                System.err.println("[SERVER] Failed to send player list: " + e.getMessage());
-            }
-        }
+    private void broadcastPlayerListTo(int playerId) {
+        ServerMessage msg = new ServerMessage();
+        msg.type    = ServerAnswerType.PLAYER_LIST_UPDATE;
+        msg.players = new ArrayList<>();
+        for (ServerPlayer p : gamePlayers.values()) msg.players.add(p.serialize());
+        sendTo(playerId, msg);
     }
 
     private void broadcastGameStart() {
-        ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.GAME_START;
-
-        String jsonMessage = gson.toJson(message);
-
-        for (ClientHandler client : clients.values()) {
-            try {
-                client.sendMessage(jsonMessage);
-            } catch (IOException e) {
-                System.err.println("[SERVER] Failed to send game start: " + e.getMessage());
-            }
-        }
+        ServerMessage m = new ServerMessage();
+        m.type = ServerAnswerType.GAME_START;
+        broadcast(m);
     }
 
     private void broadcastGamePaused() {
-        ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.GAME_PAUSED;
-
-        String jsonMessage = gson.toJson(message);
-
-        for (ClientHandler client : clients.values()) {
-            try {
-                client.sendMessage(jsonMessage);
-            } catch (IOException e) {
-                System.err.println("[SERVER] Failed to send pause: " + e.getMessage());
-            }
-        }
+        ServerMessage m = new ServerMessage();
+        m.type = ServerAnswerType.GAME_PAUSED;
+        broadcast(m);
     }
 
     private void broadcastGameResumed() {
-        ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.GAME_RESUMED;
-
-        String jsonMessage = gson.toJson(message);
-
-        for (ClientHandler client : clients.values()) {
-            try {
-                client.sendMessage(jsonMessage);
-            } catch (IOException e) {
-                System.err.println("[SERVER] Failed to send resume: " + e.getMessage());
-            }
-        }
+        ServerMessage m = new ServerMessage();
+        m.type = ServerAnswerType.GAME_RESUMED;
+        broadcast(m);
     }
 
     private void sendLeaderboard(int playerId) {
-        List<PlayerStats> leaderboard = DatabaseManager.getInstance().getLeaderboard();
+        List<PlayerStats> lb = DatabaseManager.getInstance().getLeaderboard();
+        ServerMessage msg = new ServerMessage();
+        msg.type = ServerAnswerType.LEADERBOARD;
+        msg.leaderboard = lb;
+        sendTo(playerId, msg);
+    }
 
-        ServerMessage message = new ServerMessage();
-        message.type = ServerAnswerType.LEADERBOARD;
-        message.leaderboard = leaderboard;
-
+    private void sendTo(int playerId, ServerMessage msg) {
+        ClientHandler handler = clients.get(playerId);
+        if (handler == null) return;
         try {
-            ClientHandler handler = clients.get(playerId);
-            if (handler != null) {
-                handler.sendMessage(gson.toJson(message));
-            }
+            handler.sendMessage(gson.toJson(msg));
         } catch (IOException e) {
-            System.err.println("[SERVER] Failed to send leaderboard: " + e.getMessage());
+            System.err.println("[SERVER] sendTo " + playerId + " failed: " + e.getMessage());
         }
     }
 
     public void removeClient(int playerId) {
-        ClientHandler handler = clients.remove(playerId);
-        if (handler != null) {
-            ServerPlayer player = gamePlayers.remove(playerId);
-            if (player != null && player.getName() != null) {
-                usedNames.remove(player.getName());
-            }
+        clients.remove(playerId);
+        observers.remove(playerId);
+        ServerPlayer player = gamePlayers.remove(playerId);
+        if (player != null && player.getName() != null) {
+            usedNames.remove(player.getName());
         }
         readyStatus.remove(playerId);
         pauseRequest.remove(playerId);
 
         if (state == ServerState.PAUSED && !gamePlayers.isEmpty()) {
-            for (Integer id : gamePlayers.keySet()) {
-                pauseRequest.put(id, false);
-            }
+            for (Integer id : gamePlayers.keySet()) pauseRequest.put(id, false);
             resumeGame();
         }
-
         broadcastPlayerList();
         System.out.println("[SERVER] Player " + playerId + " disconnected");
     }
@@ -451,24 +395,20 @@ public class Server {
 
     public void recordHit(int playerId) {
         ServerPlayer p = gamePlayers.get(playerId);
-        if (p != null && p.getName() != null)
-            DatabaseManager.getInstance().recordHit(p.getName());
+        if (p != null && p.getName() != null) DatabaseManager.getInstance().recordHit(p.getName());
     }
 
     public void recordShot(int playerId) {
         ServerPlayer p = gamePlayers.get(playerId);
-        if (p != null && p.getName() != null)
-            DatabaseManager.getInstance().recordShot(p.getName());
+        if (p != null && p.getName() != null) DatabaseManager.getInstance().recordShot(p.getName());
     }
 
     static void main() {
         Server server = new Server();
         server.start();
-
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             DatabaseManager.getInstance().shutdown();
             server.stop();
         }));
     }
 }
-

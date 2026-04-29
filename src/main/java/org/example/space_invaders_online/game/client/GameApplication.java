@@ -12,7 +12,7 @@ import org.example.space_invaders_online.game.sceneController.ScreenType;
 
 import java.io.IOException;
 
-public class GameApplication extends Application {
+public class    GameApplication extends Application {
     private ScreenManager screenManager;
     @Override
     public void start(Stage stage) {
