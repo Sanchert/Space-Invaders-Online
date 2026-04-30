@@ -5,6 +5,14 @@ import org.example.space_invaders_online.game.client.Request;
 import org.example.space_invaders_online.game.database.DatabaseManager;
 import org.example.space_invaders_online.game.database.PlayerStats;
 import org.example.space_invaders_online.game.gameWorld.GameWorld;
+import org.example.space_invaders_online.game.server.dto.DTOBullet;
+import org.example.space_invaders_online.game.server.dto.DTOGameState;
+import org.example.space_invaders_online.game.server.dto.DTOPlayer;
+import org.example.space_invaders_online.game.server.dto.DTOTarget;
+import org.example.space_invaders_online.game.server.object.ServerBullet;
+import org.example.space_invaders_online.game.server.object.ServerMessage;
+import org.example.space_invaders_online.game.server.object.ServerPlayer;
+import org.example.space_invaders_online.game.server.object.ServerTarget;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -91,7 +99,7 @@ public class Server {
         }
     }
 
-    public void handleClientRequest(int playerId, Request request) {
+    public void handleClientRequest (int playerId, Request request) {
         switch (request.requestType()) {
             case SET_NAME        -> handleSetName(playerId, request.args());
             case START           -> { if (!observers.contains(playerId)) handleReadyToggle(playerId); }

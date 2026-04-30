@@ -2,7 +2,7 @@ package org.example.space_invaders_online.game.client;
 
 import com.google.gson.Gson;
 import javafx.application.Platform;
-import org.example.space_invaders_online.game.server.ServerMessage;
+import org.example.space_invaders_online.game.server.object.ServerMessage;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;

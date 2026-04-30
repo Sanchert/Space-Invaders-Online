@@ -18,7 +18,11 @@ import org.example.space_invaders_online.game.client.object.ClientTarget;
 import org.example.space_invaders_online.game.sceneController.GameContext;
 import org.example.space_invaders_online.game.sceneController.ScreenManager;
 import org.example.space_invaders_online.game.sceneController.ScreenType;
-import org.example.space_invaders_online.game.server.*;
+import org.example.space_invaders_online.game.server.dto.DTOBullet;
+import org.example.space_invaders_online.game.server.dto.DTOGameState;
+import org.example.space_invaders_online.game.server.dto.DTOPlayer;
+import org.example.space_invaders_online.game.server.dto.DTOTarget;
+import org.example.space_invaders_online.game.server.object.ServerMessage;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

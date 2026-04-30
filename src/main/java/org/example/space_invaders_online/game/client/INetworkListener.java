@@ -1,5 +1,5 @@
 package org.example.space_invaders_online.game.client;
-import org.example.space_invaders_online.game.server.ServerMessage;
+import org.example.space_invaders_online.game.server.object.ServerMessage;
 
 public interface INetworkListener {
     void onInit(ServerMessage m);

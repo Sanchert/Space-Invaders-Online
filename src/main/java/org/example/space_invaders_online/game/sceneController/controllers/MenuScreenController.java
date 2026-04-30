@@ -11,8 +11,8 @@ import org.example.space_invaders_online.game.client.*;
 import org.example.space_invaders_online.game.sceneController.GameContext;
 import org.example.space_invaders_online.game.sceneController.ScreenManager;
 import org.example.space_invaders_online.game.sceneController.ScreenType;
-import org.example.space_invaders_online.game.server.DTOPlayer;
-import org.example.space_invaders_online.game.server.ServerMessage;
+import org.example.space_invaders_online.game.server.dto.DTOPlayer;
+import org.example.space_invaders_online.game.server.object.ServerMessage;
 
 import java.util.*;
 

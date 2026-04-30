@@ -3,6 +3,9 @@ package org.example.space_invaders_online.game.gameWorld;
 import org.example.space_invaders_online.game.client.MoveDirection;
 import org.example.space_invaders_online.game.client.Request;
 import org.example.space_invaders_online.game.server.*;
+import org.example.space_invaders_online.game.server.object.ServerBullet;
+import org.example.space_invaders_online.game.server.object.ServerPlayer;
+import org.example.space_invaders_online.game.server.object.ServerTarget;
 
 import java.util.Collection;
 import java.util.Map;
@@ -20,10 +23,9 @@ public class GameWorld {
     private final AtomicInteger nextObjectId = new AtomicInteger(1);
     private double playerStartPosY = 60.0;
 
-    private int currentScore = 0;
     private static final int WIN_SCORE = 6;
-    private static final int NEAR_TARGET_POINTS = 3;
-    private static final int FAR_TARGET_POINTS = 6;
+    private static final int NEAR_TARGET_POINTS = 2;
+    private static final int FAR_TARGET_POINTS = 3;
 
     public GameWorld(Server server) {
         this.server = server;
@@ -132,12 +134,11 @@ public class GameWorld {
                     target.destroy();
                     int points = target.getCost();
 
-                    if (server == null) {
-                        currentScore += points;
-                    } else {
+                    if (server != null) {
                         ServerPlayer shooter = players.get(bullet.getOwnerId());
                         if (shooter != null) {
                             shooter.addScore(points);
+                            shooter.addHit();
                             server.recordHit(shooter.objectId);
                         }
                     }
